@@ -417,8 +417,6 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
     {
         uint256 blockDelta = block.number - tokenIdToLastHarvest[tokenId];
 
-        console.log(blockDelta);
-
         Attributes memory attributes = attrIndex[tokenId];
         ERC20Mintable tokenAddress = resourceTokenAddresses[
             attributes.resource
@@ -427,9 +425,6 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         if (blockDelta == 0 || !_exists(tokenId)) {
             return (tokenAddress, 0);
         }
-
-        console.log("contract civ", civMultipliers[attributes.size]);
-        console.log("contract realm", realmMultipliers[attributes.turns]);
 
         uint256 realmMultiplier = realmMultipliers[attributes.turns];
         uint256 civMultiplier = civMultipliers[attributes.size];
@@ -450,6 +445,30 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         tokenAddress.mint(ownerOf(tokenId), tokensToMint);
 
         tokenIdToLastHarvest[tokenId] = block.number;
+    }
+
+    function multiClaim(
+        uint256[] calldata tokenIds,
+        uint8[] calldata sizes,
+        uint8[] calldata spirits,
+        uint8[] calldata ages,
+        uint8[] calldata resources,
+        uint8[] calldata morales,
+        uint8[] calldata governments,
+        uint8[] calldata turns
+    ) public nonReentrant {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            claim(
+                tokenIds[i],
+                sizes[i],
+                spirits[i],
+                ages[i],
+                resources[i],
+                morales[i],
+                governments[i],
+                turns[i]
+            );
+        }
     }
 
     function claim(

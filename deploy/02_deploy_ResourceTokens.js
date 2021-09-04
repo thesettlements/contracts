@@ -5,8 +5,8 @@ const deployFunc = async function (hre) {
     const { deployer } = await getNamedAccounts();
 
     const tokens = [
-        { name: "Gold Settlements Token", symbol: "SGLD", deploymentName: "GoldToken" },
         { name: "Iron Settlements Token", symbol: "IRON", deploymentName: "IronToken" },
+        { name: "Gold Settlements Token", symbol: "SGLD", deploymentName: "GoldToken" },
         { name: "Silver Settlements Token", symbol: "SLVR", deploymentName: "SilverToken" },
         { name: "Wood Settlements Token", symbol: "WOOD", deploymentName: "WoodToken" },
         { name: "Wool Settlements Token", symbol: "WOOL", deploymentName: "WoolToken" },

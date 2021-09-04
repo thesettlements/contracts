@@ -132,8 +132,6 @@ describe("SettlementsV2", function () {
         const json = Buffer.from(tokenURI.substring(29), "base64").toString();
         const result = JSON.parse(json);
 
-        console.log(result);
-
         const prevBlockNumber = await ethers.provider.getBlockNumber();
 
         const civMultiplier = BigNumber.from(
