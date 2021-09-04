@@ -15,7 +15,9 @@ const deployFunc = async function (hre) {
         ethers.getContract("GrainToken"),
     ]);
 
-    const LegacyContract = await ethers.getContract("SettlementsLegacy");
+    const LegacyContract =
+        { address: hre.network.config.SettlementsLegacyAddress } ||
+        (await ethers.getContract("SettlementsLegacy"));
 
     await deploy("SettlementsV2", {
         from: deployer,

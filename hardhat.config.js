@@ -1,10 +1,11 @@
+const { BigNumber } = require("ethers");
+const { parseUnits } = require("ethers/lib/utils");
+
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("hardhat-deploy");
 require("hardhat-gas-reporter");
 require("dotenv").config();
-
-console.log(process.env.DEPLOYER_PRIVATE_KEY);
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -26,6 +27,7 @@ module.exports = {
         rinkeby: {
             url: process.env.RINKEBY_URL,
             accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+            gasPrice: 1 * parseUnits("12", "gwei"),
         },
         mainnet: {
             url: `https://eth-mainnet.alchemyapi.io/v2/`,
@@ -33,7 +35,7 @@ module.exports = {
         },
     },
     etherscan: {
-        // apiKey: etherscanApiKey,
+        apiKey: process.env.ETHERSCAN_API_KEY,
     },
 
     gasReporter: {

@@ -4,6 +4,8 @@ const deployFunc = async function (hre) {
 
     const { deployer } = await getNamedAccounts();
 
+    console.log(deployer);
+
     await deploy("SettlementsLegacy", {
         from: deployer,
         args: [],
