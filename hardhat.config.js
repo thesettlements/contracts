@@ -1,34 +1,39 @@
-require('@nomiclabs/hardhat-ethers');
+require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
+require("hardhat-deploy");
+require("dotenv").config();
 
-const { alchemyApiKey, mnemonic, etherscanApiKey, alchemyMainnetApiKey } = require('./secrets.json');
+console.log(process.env.DEPLOYER_PRIVATE_KEY);
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: {
-    version: "0.8.4",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200
-      }
-    }
-  },
-  networks: {
-    rinkeby: {
-      url:`https://eth-rinkeby.alchemyapi.io/v2/${alchemyApiKey}`,
-      accounts: { mnemonic: mnemonic },
+    solidity: {
+        version: "0.8.4",
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200,
+            },
+        },
     },
-    mainnet: {
-      url: `https://eth-mainnet.alchemyapi.io/v2/${alchemyMainnetApiKey}`,
-      accounts: { mnemonic: mnemonic },
-    }
-  },
-  etherscan: {
-    apiKey: etherscanApiKey
-  }
+    namedAccounts: {
+        deployer: 0,
+    },
+    networks: {
+        rinkeby: {
+            url: process.env.RINKEBY_URL,
+            accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+        },
+        mainnet: {
+            url: `https://eth-mainnet.alchemyapi.io/v2/`,
+            accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+        },
+    },
+    etherscan: {
+        // apiKey: etherscanApiKey,
+    },
 };
 
 // hardhat.config.js

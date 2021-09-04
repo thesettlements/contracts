@@ -1,20 +1,25 @@
 {
-  "name": "settlement-v2",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
-    "@nomiclabs/hardhat-etherscan": "^2.1.5",
-    "@openzeppelin/contracts": "^4.3.1",
-    "@openzeppelin/test-helpers": "^0.5.13",
-    "base64-sol": "^1.0.1",
-    "chai": "^4.3.4",
-    "ethers": "^5.4.6",
-    "hardhat": "^2.6.1",
-    "hardhat-deploy-ethers": "^0.3.0-beta.10"
-  },
-  "engines": {
-    "node": ">=10"
-  }
+    "name": "settlement-v2",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "devDependencies": {
+        "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.10",
+        "@nomiclabs/hardhat-etherscan": "^2.1.5",
+        "@openzeppelin/contracts": "^4.3.1",
+        "@openzeppelin/test-helpers": "^0.5.13",
+        "base64-sol": "^1.0.1",
+        "chai": "^4.3.4",
+        "ethers": "^5.4.6",
+        "hardhat": "^2.6.1",
+        "hardhat-deploy": "github:Dylan-Kerler/hardhat-deploy#build",
+        "hardhat-deploy-ethers": "^0.3.0-beta.10"
+    },
+    "engines": {
+        "node": ">=10"
+    },
+    "dependencies": {
+        "@nomiclabs/hardhat-waffle": "^2.0.1",
+        "dotenv": "^10.0.0"
+    }
 }

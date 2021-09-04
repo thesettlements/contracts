@@ -45,11 +45,6 @@ contract ERC20Mintable is ERC20Burnable, Ownable {
         totalMinters -= 1;
     }
 
-    function balanceOf(account) public view returns (uint256) {
-        (__, unharvestedTokens) = settlements.getUnharvestedTokens();
-        return super.balanceOf(account) + unharvestedTokens;
-    }
-
     function mint(address to, uint256 amount) public onlyMinter {
         _mint(to, amount);
     }

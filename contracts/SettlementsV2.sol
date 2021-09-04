@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./SettlementsLegacy.sol";
 import "./ERC20Mintable.sol";
 import "base64-sol/base64.sol";
+import "hardhat/console.sol";
 
 //
 //▄████████    ▄████████     ███         ███      ▄█          ▄████████   ▄▄▄▄███▄▄▄▄      ▄████████ ███▄▄▄▄       ███        ▄████████
@@ -35,8 +36,9 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
 
     uint256 constant ONE = 10**18;
     uint8[] public civMultipliers = [1, 2, 3, 4, 5, 6, 7, 8];
-    uint8[] public realmMultipliers = [3, 2, 1, 1, 1, 1];
+    uint8[] public realmMultipliers = [3, 2, 1, 1, 1, 5];
     ERC20Mintable[] public resourceTokenAddresses;
+    mapping(uint256 => uint256) public tokenIdToLastHarvest;
 
     constructor(
         SettlementsLegacy _legacyAddress,
@@ -415,6 +417,8 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
     {
         uint256 blockDelta = block.number - tokenIdToLastHarvest[tokenId];
 
+        console.log(blockDelta);
+
         Attributes memory attributes = attrIndex[tokenId];
         ERC20Mintable tokenAddress = resourceTokenAddresses[
             attributes.resource
@@ -423,6 +427,9 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         if (blockDelta == 0 || !_exists(tokenId)) {
             return (tokenAddress, 0);
         }
+
+        console.log("contract civ", civMultipliers[attributes.size]);
+        console.log("contract realm", realmMultipliers[attributes.turns]);
 
         uint256 realmMultiplier = realmMultipliers[attributes.turns];
         uint256 civMultiplier = civMultipliers[attributes.size];
@@ -441,6 +448,8 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         ) = getUnharvestedTokens(tokenId);
 
         tokenAddress.mint(ownerOf(tokenId), tokensToMint);
+
+        tokenIdToLastHarvest[tokenId] = block.number;
     }
 
     function claim(
