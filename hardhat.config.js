@@ -27,12 +27,15 @@ module.exports = {
         rinkeby: {
             url: process.env.RINKEBY_URL,
             accounts: [process.env.DEPLOYER_PRIVATE_KEY],
-            gasPrice: 1 * parseUnits("12", "gwei"),
+            gasPrice: 10 * parseUnits("1", "gwei"),
+            SettlementsLegacyAddress: "0xc21B7314e898200c79F9e08FE287D3bAde1F59c3",
         },
-        mainnet: {
-            url: `https://eth-mainnet.alchemyapi.io/v2/`,
-            accounts: [process.env.DEPLOYER_PRIVATE_KEY],
-        },
+        // mainnet: {
+        //     url: process.env.MAINNET_URL,
+        //     accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+        //     gasPrice: 1 * parseUnits("12", "gwei"), // TODO: EDIT THIS
+        //     SettlementsLegacyAddress: "0xdEcC60000ba66700a009b8F9F7D82676B5cfA88A",
+        // },
     },
     etherscan: {
         apiKey: process.env.ETHERSCAN_API_KEY,

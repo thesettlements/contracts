@@ -540,7 +540,10 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         view
         returns (ERC20Mintable, uint256)
     {
-        uint256 blockDelta = block.number - tokenIdToLastHarvest[tokenId];
+        uint256 lastHarvest = tokenIdToLastHarvest[tokenId] > 0
+            ? tokenIdToLastHarvest[tokenId]
+            : block.number - 100;
+        uint256 blockDelta = block.number - lastHarvest;
 
         Attributes memory attributes = attrIndex[tokenId];
         ERC20Mintable tokenAddress = resourceTokenAddresses[

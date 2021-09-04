@@ -42,6 +42,4 @@ const deployFunc = async function (hre) {
     }
 };
 
-deployFunc.skip = async (hre) => Boolean(hre.network.config.SettlementsLegacyAddress);
-
 module.exports = deployFunc;
