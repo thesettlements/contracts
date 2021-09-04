@@ -37,7 +37,8 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
 
     uint256 constant ONE = 10**18;
     uint8[] public civMultipliers = [1, 2, 3, 4, 5, 6, 7, 8];
-    uint8[] public realmMultipliers = [3, 2, 1, 1, 1, 5];
+    uint8[] public realmMultipliers = [6, 5, 4, 3, 2, 1];
+    uint8[] public moralMultipliers = [2, 3, 1, 1, 3, 2, 1, 1, 1, 2];
     ERC20Mintable[] public resourceTokenAddresses;
     mapping(uint256 => uint256) public tokenIdToLastHarvest;
 
@@ -556,10 +557,12 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
 
         uint256 realmMultiplier = realmMultipliers[attributes.turns];
         uint256 civMultiplier = civMultipliers[attributes.size];
-        uint256 tokensToMint = civMultiplier *
+        uint256 moralMultiplier = moralMultipliers[attributes.morale];
+        uint256 tokensToMint = (civMultiplier *
             blockDelta *
+            moralMultiplier *
             ONE *
-            realmMultiplier;
+            realmMultiplier) / 100;
 
         return (tokenAddress, tokensToMint);
     }
