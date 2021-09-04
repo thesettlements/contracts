@@ -35,17 +35,28 @@ async function buildMigrationPayload(tokenId, legacyContract) {
 
 async function migrateContract(tokenId, legacyContract, v2Contract) {
     const dto = await buildMigrationPayload(tokenId, legacyContract);
-    await legacyContract.setApprovalForAll(v2Contract.address, true);
+    const approvalTx = await legacyContract.setApprovalForAll(v2Contract.address, true);
 
-    await v2Contract.claim(tokenId, {
-        size: dto.size,
-        spirit: dto.spirit,
-        age: dto.age,
-        resource: dto.resource,
-        morale: dto.morale,
-        government: dto.government,
-        turns: dto.turns,
-    });
+    console.log(dto);
+    console.log("approval", approvalTx);
+
+    const claim = await v2Contract.claim(
+        tokenId,
+        {
+            size: dto.size,
+            spirit: dto.spirit,
+            age: dto.age,
+            resource: dto.resource,
+            morale: dto.morale,
+            government: dto.government,
+            turns: dto.turns,
+        },
+        { gasLimit: 2_000_000 }
+    );
+
+    await claim.wait();
+
+    console.log("CLAIM", claim);
 }
 
 module.exports = {

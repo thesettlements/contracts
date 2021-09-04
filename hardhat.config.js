@@ -29,7 +29,7 @@ module.exports = {
             url: process.env.RINKEBY_URL,
             accounts: [process.env.DEPLOYER_PRIVATE_KEY],
             gasPrice: 10 * parseUnits("1", "gwei"),
-            SettlementsLegacyAddress: "0xc21B7314e898200c79F9e08FE287D3bAde1F59c3",
+            SettlementsLegacyAddress: "0x71482Da8ec9ACa79b699c37fD1F7eAC5833221b5",
         },
         // mainnet: {
         //     url: process.env.MAINNET_URL,

@@ -51,13 +51,20 @@ const deployFunc = async function (hre) {
         resourceTokens[4].address,
         resourceTokens[5].address,
         resourceTokens[6].address,
-        resourceTokens[7].address
+        resourceTokens[7].address,
+        { gasLimit: 2_000_000 }
     );
 
     console.log("Updating multipliers...");
-    const tx = await SettlementsV2Contract.setCivMultipliers([1, 2, 3, 4, 5, 6, 7, 8]);
-    const tx1 = await SettlementsV2Contract.setRealmMultipliers([6, 5, 4, 3, 2, 1]);
-    const tx2 = await SettlementsV2Contract.setMoralMultipliers([2, 3, 1, 1, 3, 2, 1, 1, 1, 2]);
+    const civMultipliers = [1, 2, 3, 4, 5, 6, 7, 8];
+    const realmMultipliers = [6, 5, 4, 3, 2, 1];
+    const moraleMultipliers = [2, 3, 1, 1, 3, 2, 1, 1, 1, 2];
+    const tx = await SettlementsV2Contract.setMultipliers(
+        civMultipliers,
+        realmMultipliers,
+        moraleMultipliers,
+        { gasLimit: 2_000_000 }
+    );
 
     console.log("Updating attributes");
     const tx3 = await SettlementsV2Contract.setAttributeOptions(
@@ -67,12 +74,18 @@ const deployFunc = async function (hre) {
         _resources,
         _morales,
         _governments,
-        _realms
+        _realms,
+        { gasLimit: 2_000_000 }
     );
 
     for (const resourceToken of resourceTokens) {
         await resourceToken.addMinter(SettlementsV2Contract.address);
     }
+
+    const TokenURIContract = await ethers.getContract("TokenURI");
+    await SettlementsV2Contract.setTokenURIHelper(TokenURIContract.address, {
+        gasLimit: 2_000_000,
+    });
 };
 
 module.exports = deployFunc;

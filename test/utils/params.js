@@ -37,7 +37,8 @@ const _governments = [
 const _realms = ["Genesis", "Valhalla", "Keskella", "Shadow", "Plains", "Ends"];
 
 const civMultipliers = [1, 2, 3, 4, 5, 6, 7, 8];
-const realmMultipliers = [3, 2, 1, 1, 1, 5];
+const realmMultipliers = [6, 5, 4, 3, 2, 1];
+const moraleMultipliers = [2, 3, 1, 1, 3, 2, 1, 1, 1, 2];
 
 module.exports = {
     _sizes,
@@ -49,4 +50,5 @@ module.exports = {
     _realms,
     civMultipliers,
     realmMultipliers,
+    moraleMultipliers,
 };

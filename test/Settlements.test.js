@@ -16,7 +16,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const { parseEther } = require("ethers/lib/utils");
-const { realmMultipliers, civMultipliers } = require("./utils/params");
+const { realmMultipliers, civMultipliers, moraleMultipliers } = require("./utils/params");
 const { inputFile } = require("hardhat/internal/core/params/argumentTypes");
 
 const ONE = BigNumber.from(parseEther("1"));
@@ -128,18 +128,29 @@ describe("SettlementsV2", function () {
         await migrateContract(254, LegacyContract, V2Contract);
 
         await V2Contract.harvest(254);
+        const prevBlockNumber = await ethers.provider.getBlockNumber();
 
         const tokenURI = await V2Contract.tokenURI(254);
         const json = Buffer.from(tokenURI.substring(29), "base64").toString();
         const result = JSON.parse(json);
 
-        const prevBlockNumber = await ethers.provider.getBlockNumber();
-
+        console.log(result);
         const civMultiplier = BigNumber.from(
             civMultipliers[_sizes.indexOf(result.attributes[0].value)]
         );
         const realmMultiplier = BigNumber.from(
             realmMultipliers[_realms.indexOf(result.attributes[6].value)]
+        );
+
+        console.log(result.attributes[4].value);
+        console.log("index", _morales.indexOf(result.attributes[4].value));
+        console.log(result.attributes[0].value);
+        console.log("index", _sizes.indexOf(result.attributes[0].value));
+        console.log(result.attributes[6].value);
+        console.log("index", _realms.indexOf(result.attributes[6].value));
+
+        const moraleMultiplier = BigNumber.from(
+            moraleMultipliers[_morales.indexOf(result.attributes[4].value)]
         );
 
         await ethers.provider.send("evm_mine");
@@ -150,9 +161,11 @@ describe("SettlementsV2", function () {
 
         expect(unharvestedTokens.toString()).to.be.equal(
             civMultiplier
-                .mul(realmMultiplier)
                 .mul(newBlockNumber - prevBlockNumber)
+                .mul(moraleMultiplier)
                 .mul(ONE)
+                .mul(realmMultiplier)
+                .div("100")
                 .toString()
         );
 
@@ -182,7 +195,9 @@ describe("SettlementsV2", function () {
                     civMultiplier
                         .mul(realmMultiplier)
                         .mul(newBlockNumber - prevBlockNumber + 1)
+                        .mul(moraleMultiplier)
                         .mul(ONE)
+                        .div("100")
                 )
                 .toString()
         );
