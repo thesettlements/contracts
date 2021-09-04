@@ -4,27 +4,40 @@ const deployFunc = async function (hre) {
 
     const { deployer } = await getNamedAccounts();
 
+    const resourceTokens = await Promise.all([
+        ethers.getContract("IronToken"),
+        ethers.getContract("GoldToken"),
+        ethers.getContract("SilverToken"),
+        ethers.getContract("WoodToken"),
+        ethers.getContract("WoolToken"),
+        ethers.getContract("WaterToken"),
+        ethers.getContract("GrassToken"),
+        ethers.getContract("GrainToken"),
+    ]);
+
     const LegacyContract = await ethers.getContract("SettlementsLegacy");
-    const GoldTokenContract = await ethers.getContract("GoldToken");
 
     await deploy("SettlementsV2", {
         from: deployer,
         args: [
             LegacyContract.address,
-            GoldTokenContract.address,
-            GoldTokenContract.address,
-            GoldTokenContract.address,
-            GoldTokenContract.address,
-            GoldTokenContract.address,
-            GoldTokenContract.address,
-            GoldTokenContract.address,
-            GoldTokenContract.address,
+            resourceTokens[0].address,
+            resourceTokens[1].address,
+            resourceTokens[2].address,
+            resourceTokens[3].address,
+            resourceTokens[4].address,
+            resourceTokens[5].address,
+            resourceTokens[6].address,
+            resourceTokens[7].address,
         ],
         log: true,
     });
 
     const SettlementsV2Contract = await ethers.getContract("SettlementsV2");
-    await GoldTokenContract.addMinter(SettlementsV2Contract.address);
+
+    for (const resourceToken of resourceTokens) {
+        await resourceToken.addMinter(SettlementsV2Contract.address);
+    }
 };
 
 deployFunc.skip = async (hre) => Boolean(hre.network.config.SettlementsLegacyAddress);

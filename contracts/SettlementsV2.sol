@@ -42,8 +42,8 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
 
     constructor(
         SettlementsLegacy _legacyAddress,
-        ERC20Mintable goldToken_,
         ERC20Mintable ironToken_,
+        ERC20Mintable goldToken_,
         ERC20Mintable silverToken_,
         ERC20Mintable woodToken_,
         ERC20Mintable woolToken_,

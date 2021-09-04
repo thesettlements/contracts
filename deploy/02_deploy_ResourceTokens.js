@@ -4,14 +4,25 @@ const deployFunc = async function (hre) {
 
     const { deployer } = await getNamedAccounts();
 
-    const tokens = [{ name: "Gold Settlements Token", symbol: "SGLD" }];
+    const tokens = [
+        { name: "Gold Settlements Token", symbol: "SGLD", deploymentName: "GoldToken" },
+        { name: "Iron Settlements Token", symbol: "IRON", deploymentName: "IronToken" },
+        { name: "Silver Settlements Token", symbol: "SLVR", deploymentName: "SilverToken" },
+        { name: "Wood Settlements Token", symbol: "WOOD", deploymentName: "WoodToken" },
+        { name: "Wool Settlements Token", symbol: "WOOL", deploymentName: "WoolToken" },
+        { name: "Water Settlements Token", symbol: "WATR", deploymentName: "WaterToken" },
+        { name: "Grass Settlements Token", symbol: "GRSS", deploymentName: "GrassToken" },
+        { name: "Grain Settlements Token", symbol: "GRN", deploymentName: "GrainToken" },
+    ];
 
-    await deploy("GoldToken", {
-        from: deployer,
-        contract: "ERC20Mintable",
-        args: ["Gold Token", "SGLD"],
-        log: true,
-    });
+    for (const { name, symbol, deploymentName } of tokens) {
+        await deploy(deploymentName, {
+            from: deployer,
+            contract: "ERC20Mintable",
+            args: [name, symbol],
+            log: true,
+        });
+    }
 };
 
 module.exports = deployFunc;
