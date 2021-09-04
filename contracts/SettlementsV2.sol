@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "./SettlementsLegacy.sol";
+import "./interfaces/ISettlementsLegacy.sol";
 import "./ERC20Mintable.sol";
 import "base64-sol/base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -32,18 +32,30 @@ import "hardhat/console.sol";
 // Randomise will pseduo randomly assign a settlement a new set of attributes & increase their turn count.
 // An allocation of 100 settlements are reserved for owner & future expansion packs
 
-contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
-    SettlementsLegacy private legacySettlements;
+contract SettlementsV2 is
+    ERC721Upgradeable,
+    ERC721EnumerableUpgradeable,
+    OwnableUpgradeable
+{
+    ISettlementsLegacy private legacySettlements;
 
     uint256 constant ONE = 10**18;
-    uint8[] public civMultipliers = [1, 2, 3, 4, 5, 6, 7, 8];
-    uint8[] public realmMultipliers = [6, 5, 4, 3, 2, 1];
-    uint8[] public moralMultipliers = [2, 3, 1, 1, 3, 2, 1, 1, 1, 2];
+    uint8[] public civMultipliers;
+    uint8[] public realmMultipliers;
+    uint8[] public moralMultipliers;
     ERC20Mintable[] public resourceTokenAddresses;
     mapping(uint256 => uint256) public tokenIdToLastHarvest;
 
-    constructor(
-        SettlementsLegacy _legacyAddress,
+    string[] public _sizes;
+    string[] public _spirits;
+    string[] public _ages;
+    string[] public _resources;
+    string[] public _morales;
+    string[] public _governments;
+    string[] public _realms;
+
+    function initialize(
+        ISettlementsLegacy _legacyAddress,
         ERC20Mintable ironToken_,
         ERC20Mintable goldToken_,
         ERC20Mintable silverToken_,
@@ -52,7 +64,10 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         ERC20Mintable waterToken_,
         ERC20Mintable grassToken_,
         ERC20Mintable grainToken_
-    ) ERC721("Settlements", "STL") {
+    ) public initializer {
+        __Ownable_init();
+        __ERC721_init("Settlements", "STL");
+
         legacySettlements = _legacyAddress;
         resourceTokenAddresses = [
             ironToken_,
@@ -66,6 +81,45 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         ];
     }
 
+    function setAttributeOptions(
+        string[] memory sizes,
+        string[] memory spirits,
+        string[] memory ages,
+        string[] memory resources,
+        string[] memory morales,
+        string[] memory governments,
+        string[] memory realms
+    ) public onlyOwner {
+        _sizes = sizes;
+        _spirits = spirits;
+        _ages = ages;
+        _resources = resources;
+        _morales = morales;
+        _governments = governments;
+        _realms = realms;
+    }
+
+    function setCivMultipliers(uint8[] memory civMultipliers_)
+        public
+        onlyOwner
+    {
+        civMultipliers = civMultipliers_;
+    }
+
+    function setRealmMultipliers(uint8[] memory realmMultipliers_)
+        public
+        onlyOwner
+    {
+        realmMultipliers = realmMultipliers_;
+    }
+
+    function setMoralMultipliers(uint8[] memory moralMultipliers_)
+        public
+        onlyOwner
+    {
+        moralMultipliers = moralMultipliers_;
+    }
+
     struct Attributes {
         uint8 size;
         uint8 spirit;
@@ -75,69 +129,6 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         uint8 government;
         uint8 turns;
     }
-
-    string[] public _sizes = [
-        "Camp",
-        "Hamlet",
-        "Village",
-        "Town",
-        "District",
-        "Precinct",
-        "Capitol",
-        "State"
-    ];
-    string[] public _spirits = ["Earth", "Fire", "Water", "Air", "Astral"];
-    string[] public _ages = [
-        "Ancient",
-        "Classical",
-        "Medieval",
-        "Renaissance",
-        "Industrial",
-        "Modern",
-        "Information",
-        "Future"
-    ];
-    string[] public _resources = [
-        "Iron",
-        "Gold",
-        "Silver",
-        "Wood",
-        "Wool",
-        "Water",
-        "Grass",
-        "Grain"
-    ];
-    string[] public _morales = [
-        "Expectant",
-        "Enlightened",
-        "Dismissive",
-        "Unhappy",
-        "Happy",
-        "Undecided",
-        "Warring",
-        "Scared",
-        "Unruly",
-        "Anarchist"
-    ];
-    string[] public _governments = [
-        "Democracy",
-        "Communism",
-        "Socialism",
-        "Oligarchy",
-        "Aristocracy",
-        "Monarchy",
-        "Theocracy",
-        "Colonialism",
-        "Dictatorship"
-    ];
-    string[] public _realms = [
-        "Genesis",
-        "Valhalla",
-        "Keskella",
-        "Shadow",
-        "Plains",
-        "Ends"
-    ];
 
     mapping(uint256 => Attributes) public attrIndex;
 
@@ -179,11 +170,12 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         returns (string[18] memory)
     {
         string[18] memory parts;
+
         parts[
             0
         ] = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.txt { fill: black; font-family: monospace; font-size: 12px;}</style><rect width="100%" height="100%" fill="white" /><text x="10" y="20" class="txt">';
         parts[1] = _sizes[attrIndex[tokenId].size];
-        parts[2] = '</text><text x="10" y="40" class="txt">';
+        parts[2] = "40";
         parts[3] = _spirits[attrIndex[tokenId].spirit];
         parts[4] = '</text><text x="10" y="60" class="txt">';
         parts[5] = _ages[attrIndex[tokenId].age];
@@ -308,69 +300,6 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
 
         attrParts[17] = " }]";
         return attrParts;
-    }
-
-    function getSettlementSize(uint256 tokenId)
-        public
-        view
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Settlement does not exist");
-        return _sizes[attrIndex[tokenId].size];
-    }
-
-    function getSettlementSpirit(uint256 tokenId)
-        public
-        view
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Settlement does not exist");
-        return _spirits[attrIndex[tokenId].spirit];
-    }
-
-    function getSettlementAge(uint256 tokenId)
-        public
-        view
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Settlement does not exist");
-        return _ages[attrIndex[tokenId].age];
-    }
-
-    function getSettlementResource(uint256 tokenId)
-        public
-        view
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Settlement does not exist");
-        return _resources[attrIndex[tokenId].resource];
-    }
-
-    function getSettlementMorale(uint256 tokenId)
-        public
-        view
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Settlement does not exist");
-        return _morales[attrIndex[tokenId].morale];
-    }
-
-    function getSettlementGovernment(uint256 tokenId)
-        public
-        view
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Settlement does not exist");
-        return _governments[attrIndex[tokenId].government];
-    }
-
-    function getSettlementRealm(uint256 tokenId)
-        public
-        view
-        returns (string memory)
-    {
-        require(_exists(tokenId), "Settlement does not exist");
-        return _realms[attrIndex[tokenId].turns];
     }
 
     function _oldTokenURI(uint256 tokenId)
@@ -521,7 +450,7 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         attrIndex[tokenId].turns = turn;
     }
 
-    function randomise(uint256 tokenId) public nonReentrant {
+    function randomise(uint256 tokenId) public {
         require(
             _exists(tokenId) &&
                 msg.sender == ownerOf(tokenId) &&
@@ -580,7 +509,7 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
     function multiClaim(
         uint256[] calldata tokenIds,
         Attributes[] memory tokenAttributes
-    ) public nonReentrant {
+    ) public {
         for (uint256 i = 0; i < tokenAttributes.length; i++) {
             claim(tokenIds[i], tokenAttributes[i]);
         }
@@ -602,14 +531,14 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, ReentrancyGuard, Ownable {
         address from,
         address to,
         uint256 tokenId
-    ) internal override(ERC721, ERC721Enumerable) {
+    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721Enumerable)
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

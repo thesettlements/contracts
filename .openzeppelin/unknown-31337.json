@@ -1,0 +1,313 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "txHash": "0x9bf9d835f13596c914cfa069192325c44ddc91f3b588f1babcb94cf4e11de743",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "a86c4fb1abf4feebe027dfdea3a114b08f20bbe02618562b978d5d0d99565a9b": {
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "txHash": "0x41c0e1a3cdccc3cf342066a5baa5f68a541a1b38fc3f85492216f8abddb54e42",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:35"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:24"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:27"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_owners",
+            "type": "t_mapping(t_uint256,t_address)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:30"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:33"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_tokenApprovals",
+            "type": "t_mapping(t_uint256,t_address)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:36"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "_operatorApprovals",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:39"
+          },
+          {
+            "contract": "ERC721Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)44_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:418"
+          },
+          {
+            "contract": "ERC721EnumerableUpgradeable",
+            "label": "_ownedTokens",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol:24"
+          },
+          {
+            "contract": "ERC721EnumerableUpgradeable",
+            "label": "_ownedTokensIndex",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol:27"
+          },
+          {
+            "contract": "ERC721EnumerableUpgradeable",
+            "label": "_allTokens",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol:30"
+          },
+          {
+            "contract": "ERC721EnumerableUpgradeable",
+            "label": "_allTokensIndex",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol:33"
+          },
+          {
+            "contract": "ERC721EnumerableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)46_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol:171"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "legacySettlements",
+            "type": "t_contract(ISettlementsLegacy)8843",
+            "src": "contracts/SettlementsV2.sol:76"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "civMultipliers",
+            "type": "t_array(t_uint8)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:79"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "realmMultipliers",
+            "type": "t_array(t_uint8)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:81"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "moralMultipliers",
+            "type": "t_array(t_uint8)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:84"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "resourceTokenAddresses",
+            "type": "t_array(t_contract(ERC20Mintable)6240)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:85"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "tokenIdToLastHarvest",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/SettlementsV2.sol:87"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "_sizes",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:89"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "_spirits",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:90"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "_ages",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:90"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "_resources",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:91"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "_morales",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:92"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "_governments",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:94"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "_realms",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "contracts/SettlementsV2.sol:95"
+          },
+          {
+            "contract": "SettlementsV2",
+            "label": "attrIndex",
+            "type": "t_mapping(t_uint256,t_struct(Attributes)7395_storage)",
+            "src": "contracts/SettlementsV2.sol:176"
+          }
+        ],
+        "types": {
+          "t_contract(ISettlementsLegacy)8843": {
+            "label": "contract ISettlementsLegacy"
+          },
+          "t_array(t_uint8)dyn_storage": {
+            "label": "uint8[]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_array(t_contract(ERC20Mintable)6240)dyn_storage": {
+            "label": "contract ERC20Mintable[]"
+          },
+          "t_contract(ERC20Mintable)6240": {
+            "label": "contract ERC20Mintable"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_string_storage)dyn_storage": {
+            "label": "string[]"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_mapping(t_uint256,t_struct(Attributes)7395_storage)": {
+            "label": "mapping(uint256 => struct SettlementsV2.Attributes)"
+          },
+          "t_struct(Attributes)7395_storage": {
+            "label": "struct SettlementsV2.Attributes",
+            "members": [
+              {
+                "label": "size",
+                "type": "t_uint8"
+              },
+              {
+                "label": "spirit",
+                "type": "t_uint8"
+              },
+              {
+                "label": "age",
+                "type": "t_uint8"
+              },
+              {
+                "label": "resource",
+                "type": "t_uint8"
+              },
+              {
+                "label": "morale",
+                "type": "t_uint8"
+              },
+              {
+                "label": "government",
+                "type": "t_uint8"
+              },
+              {
+                "label": "turns",
+                "type": "t_uint8"
+              }
+            ]
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_array(t_uint256)46_storage": {
+            "label": "uint256[46]"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
+            "label": "mapping(address => mapping(address => bool))"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)44_storage": {
+            "label": "uint256[44]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    }
+  }
+}

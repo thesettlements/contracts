@@ -5,6 +5,7 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("hardhat-deploy");
 require("hardhat-gas-reporter");
+require("hardhat-contract-sizer");
 require("dotenv").config();
 
 /**
@@ -39,6 +40,12 @@ module.exports = {
     },
     etherscan: {
         apiKey: process.env.ETHERSCAN_API_KEY,
+    },
+
+    contractSizer: {
+        alphaSort: false,
+        runOnCompile: false,
+        disambiguatePaths: false,
     },
 
     gasReporter: {
