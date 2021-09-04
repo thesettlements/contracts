@@ -36,16 +36,16 @@ async function buildMigrationPayload(tokenId, legacyContract) {
 async function migrateContract(tokenId, legacyContract, v2Contract) {
     const dto = await buildMigrationPayload(tokenId, legacyContract);
     await legacyContract.setApprovalForAll(v2Contract.address, true);
-    await v2Contract.claim(
-        tokenId,
-        dto.size,
-        dto.spirit,
-        dto.age,
-        dto.resource,
-        dto.morale,
-        dto.government,
-        dto.turns
-    );
+
+    await v2Contract.claim(tokenId, {
+        size: dto.size,
+        spirit: dto.spirit,
+        age: dto.age,
+        resource: dto.resource,
+        morale: dto.morale,
+        government: dto.government,
+        turns: dto.turns,
+    });
 }
 
 module.exports = {

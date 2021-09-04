@@ -17,6 +17,7 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const { parseEther } = require("ethers/lib/utils");
 const { realmMultipliers, civMultipliers } = require("./utils/params");
+const { inputFile } = require("hardhat/internal/core/params/argumentTypes");
 
 const ONE = BigNumber.from(parseEther("1"));
 
@@ -37,26 +38,26 @@ describe("SettlementsV2", function () {
         const dto = await buildMigrationPayload(1001, LegacyContract);
 
         await LegacyContract.approve(V2Contract.address, 1001);
-        await V2Contract.claim(
-            1001,
-            dto.size,
-            dto.spirit,
-            dto.age,
-            dto.resource,
-            dto.morale,
-            dto.government,
-            dto.turns
-        );
+        await V2Contract.claim(1001, dto);
 
-        const newURI = await V2Contract.tokenURI(1001);
-        expect(newURI).to.be.eq(tokenURI);
+        const [account1] = await getUnnamedAccounts();
+        const owner = await V2Contract.ownerOf(1001);
+        expect(owner).to.be.eq(account1);
     });
 
     it("fail to resettle invalid token", async function () {
         try {
             await LegacyContract.settle(1001);
             await LegacyContract.approve(V2Contract.address, 1001);
-            await V2Contract.claim(1001, 0, 0, 0, 0, 0, 0, 0);
+            await V2Contract.claim(1001, {
+                size: 0,
+                spirit: 0,
+                age: 0,
+                resource: 0,
+                morale: 0,
+                government: 0,
+                turns: 0,
+            });
         } catch (e) {
             expect(e.message).to.eq(
                 "VM Exception while processing transaction: reverted with reason string 'Attributes don't match legacy contract'"
@@ -169,5 +170,67 @@ describe("SettlementsV2", function () {
         };
 
         expect(await tokenContract.symbol()).to.equal(resourceToSymbol[result.attributes[3].value]);
+
+        const [account1] = await getUnnamedAccounts();
+        const balanceBefore = await tokenContract.balanceOf(account1);
+        await V2Contract.harvest(254);
+        const balanceAfter = await tokenContract.balanceOf(account1);
+
+        expect(balanceAfter.toString()).to.eq(
+            balanceBefore
+                .add(
+                    civMultiplier
+                        .mul(realmMultiplier)
+                        .mul(newBlockNumber - prevBlockNumber + 1)
+                        .mul(ONE)
+                )
+                .toString()
+        );
+    });
+
+    it("Should multi claim", async function () {
+        await LegacyContract.settle(1001);
+        await LegacyContract.settle(399);
+
+        const tokenURI1 = await LegacyContract.tokenURI(1001);
+        const dto1 = await buildMigrationPayload(1001, LegacyContract);
+
+        const tokenURI2 = await LegacyContract.tokenURI(399);
+        const dto2 = await buildMigrationPayload(399, LegacyContract);
+
+        await LegacyContract.setApprovalForAll(V2Contract.address, true);
+        await V2Contract.multiClaim(["1001", "399"], [dto1, dto2]);
+
+        const [account1] = await getUnnamedAccounts();
+        let owner = await V2Contract.ownerOf(1001);
+        expect(owner).to.be.eq(account1);
+
+        owner = await V2Contract.ownerOf(399);
+        expect(owner).to.be.eq(account1);
+    });
+
+    it("Should harvest on reroll", async function () {
+        await LegacyContract.settle(254);
+        await migrateContract(254, LegacyContract, V2Contract);
+
+        const [contractAddress] = await V2Contract.getUnharvestedTokens(254);
+        const tokenContract = await ethers.getContractAt("ERC20Mintable", contractAddress);
+
+        const [account1] = await getUnnamedAccounts();
+        const balanceBefore = await tokenContract.balanceOf(account1);
+        await V2Contract.randomise(254);
+        const balanceAfter = await tokenContract.balanceOf(account1);
+
+        expect(balanceBefore.toString()).to.not.equal(balanceAfter.toString());
+    });
+
+    it("Should include harvesting in tokenURI", async function () {
+        await LegacyContract.settle(254);
+        await migrateContract(254, LegacyContract, V2Contract);
+
+        await ethers.provider.send("evm_mine");
+        await ethers.provider.send("evm_mine");
+
+        console.log(await V2Contract.tokenURI(254));
     });
 });

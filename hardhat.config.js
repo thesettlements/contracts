@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("hardhat-deploy");
+require("hardhat-gas-reporter");
 require("dotenv").config();
 
 console.log(process.env.DEPLOYER_PRIVATE_KEY);
@@ -14,7 +15,7 @@ module.exports = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 200,
+                runs: 600,
             },
         },
     },
@@ -33,6 +34,10 @@ module.exports = {
     },
     etherscan: {
         // apiKey: etherscanApiKey,
+    },
+
+    gasReporter: {
+        enabled: true,
     },
 };
 
