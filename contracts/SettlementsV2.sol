@@ -4,15 +4,10 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/ISettlementsLegacy.sol";
 import "./ERC20Mintable.sol";
 import "base64-sol/base64.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "hardhat/console.sol";
 
 //
 //▄████████    ▄████████     ███         ███      ▄█          ▄████████   ▄▄▄▄███▄▄▄▄      ▄████████ ███▄▄▄▄       ███        ▄████████
@@ -67,6 +62,7 @@ contract SettlementsV2 is
     ) public initializer {
         __Ownable_init();
         __ERC721_init("Settlements", "STL");
+        __ERC721Enumerable_init();
 
         legacySettlements = _legacyAddress;
         resourceTokenAddresses = [
@@ -459,10 +455,7 @@ contract SettlementsV2 is
         );
 
         harvest(tokenId);
-        randomiseAttributes(
-            tokenId,
-            uint8(SafeMath.add(attrIndex[tokenId].turns, 1))
-        );
+        randomiseAttributes(tokenId, attrIndex[tokenId].turns + 1);
     }
 
     function getUnharvestedTokens(uint256 tokenId)
