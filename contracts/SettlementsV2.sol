@@ -267,7 +267,7 @@ contract SettlementsV2 is
 
     function claimAndReroll(uint256 tokenId) public {
         legacySettlements.transferFrom(msg.sender, address(this), tokenId);
-        randomiseAttributes(tokenId, 0);
+        randomiseAttributes(tokenId, 1);
         _safeMint(msg.sender, tokenId);
     }
 
