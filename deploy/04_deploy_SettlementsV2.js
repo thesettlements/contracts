@@ -32,40 +32,21 @@ const deployFunc = async function (hre) {
     await deploy("SettlementsV2", {
         from: deployer,
         log: true,
-        proxy: {
-            proxyContract: "TransparentUpgradeableProxy",
-            viaAdminContract: {
-                name: "ProxyAdmin",
-                args: [],
-            },
-        },
+        args: [
+            LegacyContractAddress,
+            resourceTokens[0].address,
+            resourceTokens[1].address,
+            resourceTokens[2].address,
+            resourceTokens[3].address,
+            resourceTokens[4].address,
+            resourceTokens[5].address,
+            resourceTokens[6].address,
+            resourceTokens[7].address,
+        ]
     });
 
     const SettlementsV2Contract = await ethers.getContract("SettlementsV2");
-    await SettlementsV2Contract.initialize(
-        LegacyContractAddress,
-        resourceTokens[0].address,
-        resourceTokens[1].address,
-        resourceTokens[2].address,
-        resourceTokens[3].address,
-        resourceTokens[4].address,
-        resourceTokens[5].address,
-        resourceTokens[6].address,
-        resourceTokens[7].address,
-        { gasLimit: 2_000_000 }
-    );
-
-    console.log("Updating multipliers...");
-    const civMultipliers = [1, 2, 3, 4, 5, 6, 7, 8];
-    const realmMultipliers = [6, 5, 4, 3, 2, 1];
-    const moraleMultipliers = [2, 3, 1, 1, 3, 2, 1, 1, 1, 2];
-    const tx = await SettlementsV2Contract.setMultipliers(
-        civMultipliers,
-        realmMultipliers,
-        moraleMultipliers,
-        { gasLimit: 2_000_000 }
-    );
-
+    
     console.log("Updating attributes");
     const tx3 = await SettlementsV2Contract.setAttributeOptions(
         _sizes,
@@ -82,8 +63,8 @@ const deployFunc = async function (hre) {
         await resourceToken.addMinter(SettlementsV2Contract.address);
     }
 
-    const TokenURIContract = await ethers.getContract("TokenURI");
-    await SettlementsV2Contract.setTokenURIHelper(TokenURIContract.address, {
+    const HelpersContract = await ethers.getContract("Helpers");
+    await SettlementsV2Contract.setHelpersContract(HelpersContract.address, {
         gasLimit: 2_000_000,
     });
 };

@@ -4,8 +4,11 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "base64-sol/base64.sol";
 import "hardhat/console.sol";
+import "./SettlementsV2.sol";
+import "./ERC20Mintable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract TokenURI {
+contract Helpers is Ownable {
     function _makeLegacyParts(
         string memory size,
         string memory spirit,
@@ -295,5 +298,49 @@ contract TokenURI {
         );
 
         return string(abi.encodePacked("data:application/json;base64,", json));
+    }
+
+    uint8[] public civMultipliers;
+    uint8[] public realmMultipliers;
+    uint8[] public moralMultipliers;
+
+    uint256 constant ONE = 10**18;
+
+    function setMultipliers(
+        uint8[] memory civMultipliers_,
+        uint8[] memory realmMultipliers_,
+        uint8[] memory moralMultipliers_
+    ) public onlyOwner {
+        civMultipliers = civMultipliers_;
+        realmMultipliers = realmMultipliers_;
+        moralMultipliers = moralMultipliers_;
+    }
+
+    function getUnharvestedTokens(uint256 tokenId, SettlementsV2.Attributes memory attributes)
+        public
+        view
+        returns (ERC20Mintable, uint256)
+    {
+        SettlementsV2 caller = SettlementsV2(msg.sender);
+
+        uint256 lastHarvest = caller.tokenIdToLastHarvest(tokenId);
+        uint256 blockDelta = block.number - lastHarvest;
+
+        ERC20Mintable tokenAddress = caller.resourceTokenAddresses(attributes.resource);
+
+        if (blockDelta == 0 || lastHarvest == 0) {
+            return (tokenAddress, 0);
+        }
+
+        uint256 realmMultiplier = realmMultipliers[attributes.turns];
+        uint256 civMultiplier = civMultipliers[attributes.size];
+        uint256 moralMultiplier = moralMultipliers[attributes.morale];
+        uint256 tokensToMint = (civMultiplier *
+            blockDelta *
+            moralMultiplier *
+            ONE *
+            realmMultiplier) / 100;
+
+        return (tokenAddress, tokensToMint);
     }
 }

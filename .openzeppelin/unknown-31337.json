@@ -8490,13 +8490,13 @@
           {
             "contract": "SettlementsV2",
             "label": "legacySettlements",
-            "type": "t_contract(SettlementsLegacy)7164",
+            "type": "t_contract(SettlementsLegacy)6340",
             "src": "contracts/SettlementsV2.sol:71"
           },
           {
             "contract": "SettlementsV2",
             "label": "tokenURIHelperContract",
-            "type": "t_contract(TokenURI)9119",
+            "type": "t_contract(TokenURI)8295",
             "src": "contracts/SettlementsV2.sol:73"
           },
           {
@@ -8520,7 +8520,7 @@
           {
             "contract": "SettlementsV2",
             "label": "resourceTokenAddresses",
-            "type": "t_array(t_contract(ERC20Mintable)6240)dyn_storage",
+            "type": "t_array(t_contract(ERC20Mintable)5416)dyn_storage",
             "src": "contracts/SettlementsV2.sol:82"
           },
           {
@@ -8574,15 +8574,15 @@
           {
             "contract": "SettlementsV2",
             "label": "attrIndex",
-            "type": "t_mapping(t_uint256,t_struct(Attributes)7399_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Attributes)6575_storage)",
             "src": "contracts/SettlementsV2.sol:174"
           }
         ],
         "types": {
-          "t_contract(SettlementsLegacy)7164": {
+          "t_contract(SettlementsLegacy)6340": {
             "label": "contract SettlementsLegacy"
           },
-          "t_contract(TokenURI)9119": {
+          "t_contract(TokenURI)8295": {
             "label": "contract TokenURI"
           },
           "t_array(t_uint8)dyn_storage": {
@@ -8591,10 +8591,10 @@
           "t_uint8": {
             "label": "uint8"
           },
-          "t_array(t_contract(ERC20Mintable)6240)dyn_storage": {
+          "t_array(t_contract(ERC20Mintable)5416)dyn_storage": {
             "label": "contract ERC20Mintable[]"
           },
-          "t_contract(ERC20Mintable)6240": {
+          "t_contract(ERC20Mintable)5416": {
             "label": "contract ERC20Mintable"
           },
           "t_mapping(t_uint256,t_uint256)": {
@@ -8609,10 +8609,10 @@
           "t_string_storage": {
             "label": "string"
           },
-          "t_mapping(t_uint256,t_struct(Attributes)7399_storage)": {
+          "t_mapping(t_uint256,t_struct(Attributes)6575_storage)": {
             "label": "mapping(uint256 => struct SettlementsV2.Attributes)"
           },
-          "t_struct(Attributes)7399_storage": {
+          "t_struct(Attributes)6575_storage": {
             "label": "struct SettlementsV2.Attributes",
             "members": [
               {
