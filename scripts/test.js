@@ -14,18 +14,18 @@ async function main() {
 
     const SettlementsV2 = await ethers.getContract("SettlementsV2");
 
-    const tx = await SettlementsLegacy.settle(901, { gasLimit: 1_000_000 });
+    const tx = await SettlementsLegacy.settle(512, { gasLimit: 1_000_000 });
     console.log(tx);
     await tx.wait();
 
-    await migrateContract(901, SettlementsLegacy, SettlementsV2);
+    await migrateContract(512, SettlementsLegacy, SettlementsV2);
 
-    console.log(await SettlementsV2.ownerOf(901, { gasLimit: 2_000_000 }));
-    console.log(await SettlementsV2.tokenURI(901));
+    console.log(await SettlementsV2.ownerOf(512, { gasLimit: 2_000_000 }));
+    console.log(await SettlementsV2.tokenURI(512));
     const tx1 = await SettlementsV2.transferFrom(
         deployer,
-        "0x89324327750e10A040A05e5286A5fB66A9Ba71C4s",
-        901
+        "0x83299c2ee1B74041dffcF56ff0a653DBD7e0cD40",
+        512
     );
     console.log(tx1);
 }

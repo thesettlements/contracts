@@ -93,8 +93,9 @@ contract Helpers is Ownable {
         parts[12] = '</text><text x="10" y="140" class="txt">';
         parts[13] = realm;
         parts[14] = '</text><text x="10" y="160" class="txt">';
-
-        parts[15] = string(
+        parts[15] = "------------";
+        parts[16] = '</text><text x="10" y="180" class="txt">';
+        parts[17] = string(
             abi.encodePacked(
                 "$",
                 tokenSymbol,

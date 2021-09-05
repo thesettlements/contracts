@@ -147,13 +147,11 @@ contract SettlementsV2 is
     }
 
     function getUnharvestedTokens(uint256 tokenId) public view returns (ERC20Mintable, uint256) {
-
         Attributes memory attributes = attrIndex[tokenId];
         return helpersContract.getUnharvestedTokens(
-                tokenId,
-                attributes
-            );
-
+            tokenId,
+            attributes
+        );
     }
 
     function _tokenURI(uint256 tokenId, bool useLegacy)
@@ -265,6 +263,12 @@ contract SettlementsV2 is
 
         tokenIdToLastHarvest[tokenId] = block.number;
         require(v2Uri == legacyURI, "Attributes don't match legacy contract");
+    }
+
+    function claimAndReroll(uint256 tokenId) public {
+        legacySettlements.transferFrom(msg.sender, address(this), tokenId);
+        randomiseAttributes(tokenId, 0);
+        _safeMint(msg.sender, tokenId);
     }
 
     function _beforeTokenTransfer(

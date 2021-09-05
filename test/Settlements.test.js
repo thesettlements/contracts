@@ -134,20 +134,12 @@ describe("SettlementsV2", function () {
         const json = Buffer.from(tokenURI.substring(29), "base64").toString();
         const result = JSON.parse(json);
 
-        console.log(result);
         const civMultiplier = BigNumber.from(
             civMultipliers[_sizes.indexOf(result.attributes[0].value)]
         );
         const realmMultiplier = BigNumber.from(
             realmMultipliers[_realms.indexOf(result.attributes[6].value)]
         );
-
-        console.log(result.attributes[4].value);
-        console.log("index", _morales.indexOf(result.attributes[4].value));
-        console.log(result.attributes[0].value);
-        console.log("index", _sizes.indexOf(result.attributes[0].value));
-        console.log(result.attributes[6].value);
-        console.log("index", _realms.indexOf(result.attributes[6].value));
 
         const moraleMultiplier = BigNumber.from(
             moraleMultipliers[_morales.indexOf(result.attributes[4].value)]
@@ -247,5 +239,17 @@ describe("SettlementsV2", function () {
         await ethers.provider.send("evm_mine");
 
         console.log(await V2Contract.tokenURI(254));
+    });
+
+    it("Should claim and reroll", async function() {
+        await LegacyContract.settle(1001);
+        const tokenURI = await LegacyContract.tokenURI(1001);
+
+        await LegacyContract.approve(V2Contract.address, 1001);
+        await V2Contract.claimAndReroll(1001);
+
+        const [account1] = await getUnnamedAccounts();
+        const owner = await V2Contract.ownerOf(1001);
+        expect(owner).to.be.eq(account1);
     });
 });

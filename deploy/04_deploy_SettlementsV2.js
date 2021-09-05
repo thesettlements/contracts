@@ -46,7 +46,7 @@ const deployFunc = async function (hre) {
     });
 
     const SettlementsV2Contract = await ethers.getContract("SettlementsV2");
-    
+
     console.log("Updating attributes");
     const tx3 = await SettlementsV2Contract.setAttributeOptions(
         _sizes,
@@ -59,8 +59,10 @@ const deployFunc = async function (hre) {
         { gasLimit: 2_000_000 }
     );
 
+    await tx3.wait();
+
     for (const resourceToken of resourceTokens) {
-        await resourceToken.addMinter(SettlementsV2Contract.address);
+        const tx4 = await resourceToken.addMinter(SettlementsV2Contract.address);
     }
 
     const HelpersContract = await ethers.getContract("Helpers");

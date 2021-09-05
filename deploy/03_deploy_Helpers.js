@@ -24,6 +24,8 @@ const deployFunc = async function (hre) {
         moraleMultipliers,
         { gasLimit: 2_000_000 }
     );
+
+    await tx.wait();
 };
 
 module.exports = deployFunc;
