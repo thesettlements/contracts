@@ -42,24 +42,10 @@ const deployFunc = async function (hre) {
             resourceTokens[5].address,
             resourceTokens[6].address,
             resourceTokens[7].address,
-        ]
+        ],
     });
 
     const SettlementsV2Contract = await ethers.getContract("SettlementsV2");
-
-    console.log("Updating attributes");
-    const tx3 = await SettlementsV2Contract.setAttributeOptions(
-        _sizes,
-        _spirits,
-        _ages,
-        _resources,
-        _morales,
-        _governments,
-        _realms,
-        { gasLimit: 2_000_000 }
-    );
-
-    await tx3.wait();
 
     for (const resourceToken of resourceTokens) {
         const tx4 = await resourceToken.addMinter(SettlementsV2Contract.address);
