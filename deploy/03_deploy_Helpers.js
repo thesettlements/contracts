@@ -12,7 +12,7 @@ const deployFunc = async function (hre) {
         log: true,
     });
 
-   const HelpersContract = await ethers.getContract("Helpers");
+    const HelpersContract = await ethers.getContract("Helpers");
 
     console.log("Updating multipliers...");
     const civMultipliers = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -21,8 +21,7 @@ const deployFunc = async function (hre) {
     const tx = await HelpersContract.setMultipliers(
         civMultipliers,
         realmMultipliers,
-        moraleMultipliers,
-        { gasLimit: 2_000_000 }
+        moraleMultipliers
     );
 
     await tx.wait();

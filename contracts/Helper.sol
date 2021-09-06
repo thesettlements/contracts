@@ -135,16 +135,10 @@ contract Helpers is Ownable {
         attrParts[12] = '" }, { "trait_type": "Realm", "value": "';
         attrParts[13] = realm;
         attrParts[14] = '" }, { "trait_type": ';
-        attrParts[15] = string(
-            abi.encodePacked('"$', tokenSymbol, '", "value": ')
-        );
+        attrParts[15] = string(abi.encodePacked('"$', tokenSymbol, '", "value": '));
 
         attrParts[16] = string(
-            abi.encodePacked(
-                '"',
-                Strings.toString(unharvestedTokenAmount / 10**18),
-                '"'
-            )
+            abi.encodePacked('"', Strings.toString(unharvestedTokenAmount / 10**18), '"')
         );
 
         attrParts[17] = " }]";
@@ -340,7 +334,7 @@ contract Helpers is Ownable {
             blockDelta *
             moralMultiplier *
             ONE *
-            realmMultiplier) / 100;
+            realmMultiplier) / 300;
 
         return (tokenAddress, tokensToMint);
     }

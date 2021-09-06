@@ -14,13 +14,13 @@ async function main() {
 
     const SettlementsV2 = await ethers.getContract("SettlementsV2");
 
-    const tx = await SettlementsLegacy.settle(512, { gasLimit: 1_000_000 });
+    const tx = await SettlementsLegacy.settle(512);
     console.log(tx);
     await tx.wait();
 
     await migrateContract(512, SettlementsLegacy, SettlementsV2);
 
-    console.log(await SettlementsV2.ownerOf(512, { gasLimit: 2_000_000 }));
+    console.log(await SettlementsV2.ownerOf(512));
     console.log(await SettlementsV2.tokenURI(512));
     const tx1 = await SettlementsV2.transferFrom(
         deployer,

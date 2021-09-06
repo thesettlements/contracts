@@ -40,19 +40,15 @@ async function migrateContract(tokenId, legacyContract, v2Contract) {
     console.log(dto);
     console.log("approval", approvalTx);
 
-    const claim = await v2Contract.claim(
-        tokenId,
-        {
-            size: dto.size,
-            spirit: dto.spirit,
-            age: dto.age,
-            resource: dto.resource,
-            morale: dto.morale,
-            government: dto.government,
-            turns: dto.turns,
-        },
-        { gasLimit: 2_000_000 }
-    );
+    const claim = await v2Contract.claim(tokenId, {
+        size: dto.size,
+        spirit: dto.spirit,
+        age: dto.age,
+        resource: dto.resource,
+        morale: dto.morale,
+        government: dto.government,
+        turns: dto.turns,
+    });
 
     await claim.wait();
 

@@ -12,7 +12,6 @@
         "chai": "^4.3.4",
         "ethers": "^5.4.6",
         "hardhat": "^2.6.1",
-        "hardhat-deploy": "github:Dylan-Kerler/hardhat-deploy#build",
         "hardhat-deploy-ethers": "^0.3.0-beta.10"
     },
     "engines": {
@@ -23,6 +22,7 @@
         "@openzeppelin/contracts-upgradeable": "^4.3.1",
         "dotenv": "^10.0.0",
         "hardhat-contract-sizer": "^2.0.3",
+        "hardhat-deploy": "^0.9.1",
         "hardhat-gas-reporter": "^1.0.4"
     }
 }

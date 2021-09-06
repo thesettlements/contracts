@@ -52,9 +52,7 @@ const deployFunc = async function (hre) {
     }
 
     const HelpersContract = await ethers.getContract("Helpers");
-    await SettlementsV2Contract.setHelpersContract(HelpersContract.address, {
-        gasLimit: 2_000_000,
-    });
+    await SettlementsV2Contract.setHelpersContract(HelpersContract.address);
 };
 
 module.exports = deployFunc;

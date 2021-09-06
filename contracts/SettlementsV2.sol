@@ -244,7 +244,7 @@ contract SettlementsV2 is ERC721, ERC721Enumerable, Ownable {
 
     function claimAndReroll(uint256 tokenId) public {
         legacySettlements.transferFrom(msg.sender, address(this), tokenId);
-        randomiseAttributes(tokenId, 1);
+        randomiseAttributes(tokenId, 3);
         _safeMint(msg.sender, tokenId);
     }
 

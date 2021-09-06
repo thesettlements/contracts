@@ -157,7 +157,7 @@ describe("SettlementsV2", function () {
                 .mul(moraleMultiplier)
                 .mul(ONE)
                 .mul(realmMultiplier)
-                .div("100")
+                .div("300")
                 .toString()
         );
 
@@ -165,7 +165,7 @@ describe("SettlementsV2", function () {
 
         const resourceToSymbol = {
             Iron: "IRON",
-            Gold: "SGLD",
+            Gold: "GOLD",
             Silver: "SLVR",
             Wood: "WOOD",
             Wool: "WOOL",
@@ -189,7 +189,7 @@ describe("SettlementsV2", function () {
                         .mul(newBlockNumber - prevBlockNumber + 1)
                         .mul(moraleMultiplier)
                         .mul(ONE)
-                        .div("100")
+                        .div("300")
                 )
                 .toString()
         );
@@ -241,7 +241,7 @@ describe("SettlementsV2", function () {
         console.log(await V2Contract.tokenURI(254));
     });
 
-    it("Should claim and reroll", async function() {
+    it("Should claim and reroll", async function () {
         await LegacyContract.settle(1001);
         const tokenURI = await LegacyContract.tokenURI(1001);
 
@@ -251,5 +251,11 @@ describe("SettlementsV2", function () {
         const [account1] = await getUnnamedAccounts();
         const owner = await V2Contract.ownerOf(1001);
         expect(owner).to.be.eq(account1);
+
+        const newTokenURI = await V2Contract.tokenURI(1001);
+        const json = Buffer.from(newTokenURI.substring(29), "base64").toString();
+        const parsedURI = JSON.parse(json);
+
+        expect(parsedURI.attributes[6].value).to.equal("Shadow");
     });
 });
