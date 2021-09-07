@@ -31,12 +31,12 @@ module.exports = {
             gasPrice: 10 * parseUnits("1", "gwei"),
             SettlementsLegacyAddress: "0x71482Da8ec9ACa79b699c37fD1F7eAC5833221b5",
         },
-        // mainnet: {
-        //     url: process.env.MAINNET_URL,
-        //     accounts: [process.env.DEPLOYER_PRIVATE_KEY],
-        //     gasPrice: 1 * parseUnits("12", "gwei"), // TODO: EDIT THIS
-        //     SettlementsLegacyAddress: "0xdEcC60000ba66700a009b8F9F7D82676B5cfA88A",
-        // },
+        mainnet: {
+            url: process.env.MAINNET_URL,
+            accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+            gasPrice: 1 * parseUnits("100", "gwei"),
+            SettlementsLegacyAddress: "0xdEcC60000ba66700a009b8F9F7D82676B5cfA88A",
+        },
     },
     etherscan: {
         apiKey: process.env.ETHERSCAN_API_KEY,
