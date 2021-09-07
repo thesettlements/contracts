@@ -34,7 +34,7 @@ module.exports = {
         mainnet: {
             url: process.env.MAINNET_URL,
             accounts: [process.env.DEPLOYER_PRIVATE_KEY],
-            gasPrice: 1 * parseUnits("100", "gwei"),
+            gasPrice: 1 * parseUnits("90", "gwei"),
             SettlementsLegacyAddress: "0xdEcC60000ba66700a009b8F9F7D82676B5cfA88A",
         },
     },
