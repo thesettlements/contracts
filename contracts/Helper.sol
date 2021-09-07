@@ -134,13 +134,9 @@ contract Helpers is Ownable {
         attrParts[11] = government;
         attrParts[12] = '" }, { "trait_type": "Realm", "value": "';
         attrParts[13] = realm;
-        attrParts[14] = '" }, { "trait_type": ';
+        attrParts[14] = '" }, { "display_type": "number",  "trait_type": ';
         attrParts[15] = string(abi.encodePacked('"$', tokenSymbol, '", "value": '));
-
-        attrParts[16] = string(
-            abi.encodePacked('"', Strings.toString(unharvestedTokenAmount / 10**18), '"')
-        );
-
+        attrParts[16] = string(abi.encodePacked(Strings.toString(unharvestedTokenAmount / 10**18)));
         attrParts[17] = " }]";
         return attrParts;
     }

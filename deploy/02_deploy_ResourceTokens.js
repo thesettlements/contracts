@@ -13,6 +13,10 @@ const deployFunc = async function (hre) {
         { name: "Water Settlements Token", symbol: "WATR", deploymentName: "WaterToken" },
         { name: "Grass Settlements Token", symbol: "GRSS", deploymentName: "GrassToken" },
         { name: "Grain Settlements Token", symbol: "GRN", deploymentName: "GrainToken" },
+        { name: "Fish Settlements Token", symbol: "FISH", deploymentName: "FishToken" },
+        { name: "Pearl Settlements Token", symbol: "PRL", deploymentName: "PearlToken" },
+        { name: "Oil Settlements Token", symbol: "OIL", deploymentName: "OilToken" },
+        { name: "Diamond Settlements Token", symbol: "DMND", deploymentName: "DiamondToken" },
     ];
 
     for (const { name, symbol, deploymentName } of tokens) {

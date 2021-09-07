@@ -17,7 +17,7 @@ module.exports = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 600,
+                runs: 200,
             },
         },
     },
@@ -34,7 +34,7 @@ module.exports = {
         // mainnet: {
         //     url: process.env.MAINNET_URL,
         //     accounts: [process.env.DEPLOYER_PRIVATE_KEY],
-        //     gasPrice: 1 * parseUnits("12", "gwei"), // TODO: EDIT THIS
+        //     gasPrice: 1 * parseUnits("1", "gwei"), // TODO: EDIT THIS
         //     SettlementsLegacyAddress: "0xdEcC60000ba66700a009b8F9F7D82676B5cfA88A",
         // },
     },
@@ -52,5 +52,3 @@ module.exports = {
         enabled: true,
     },
 };
-
-// hardhat.config.js
