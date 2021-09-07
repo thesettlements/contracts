@@ -14,19 +14,19 @@ async function main() {
 
     const SettlementsV2 = await ethers.getContract("SettlementsV2");
 
-    const tx = await SettlementsLegacy.settle(512);
+    const tx = await SettlementsLegacy.settle(2018);
     console.log(tx);
     await tx.wait();
 
-    await migrateContract(512, SettlementsLegacy, SettlementsV2);
+    await migrateContract(2018, SettlementsLegacy, SettlementsV2);
 
-    console.log(await SettlementsV2.ownerOf(512));
-    console.log(await SettlementsV2.tokenURI(512));
-    const tx1 = await SettlementsV2.transferFrom(
-        deployer,
-        "0x83299c2ee1B74041dffcF56ff0a653DBD7e0cD40",
-        512
-    );
+    console.log(await SettlementsV2.ownerOf(2018));
+    console.log(await SettlementsV2.tokenURI(2018));
+    // const tx1 = await SettlementsV2.transferFrom(
+    //     deployer,
+    //     "0x83299c2ee1B74041dffcF56ff0a653DBD7e0cD40",
+    //     512
+    // );
     console.log(tx1);
 }
 
