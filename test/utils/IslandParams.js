@@ -1,6 +1,6 @@
 const resources = ["Fish", "Wood", "Iron", "Silver", "Pearl", "Oil", "Diamond"];
-const climates = ["Humid", "Arid", "Rainy", "Tropical", "Temperate", "Icy"];
-const terrains = ["Canyons", "Hilly", "Mountainous", "Flatlands"];
+const climates = ["Temperate", "Rainy", "Humid", "Arid", "Tropical", "Icy"];
+const terrains = ["Flatlands", "Hilly", "Canyons", "Mountainous"];
 
 module.exports = {
     resources,

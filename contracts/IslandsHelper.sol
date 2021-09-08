@@ -8,10 +8,23 @@ import "./ERC20Mintable.sol";
 import "base64-sol/base64.sol";
 
 contract IslandsHelper is Ownable {
+    uint256 constant ONE = 10**18;
+
     Islands public islandContract;
+
+    uint8[] public climateMultipliers;
+    uint8[] public terrainMultipliers;
 
     function setIslandsContract(Islands islandContract_) public {
         islandContract = islandContract_;
+    }
+
+    function setMultipliers(uint8[] memory climateMultipliers_, uint8[] memory terrainMultipliers_)
+        public
+        onlyOwner
+    {
+        climateMultipliers = climateMultipliers_;
+        terrainMultipliers = terrainMultipliers_;
     }
 
     function getImageOutput(Islands.Island memory islandInfo) public view returns (string memory) {
@@ -37,18 +50,16 @@ contract IslandsHelper is Ownable {
                 string(
                     abi.encodePacked(
                         "Pop. ",
-                        Strings.toString(islandInfo.basePopulation),
+                        Strings.toString(islandInfo.population),
                         "/",
                         Strings.toString(islandInfo.maxPopulation)
                     )
                 ),
                 '</text><text x="10" y="120" class="txt">',
-                string(abi.encodePacked("Base Pop. ", Strings.toString(islandInfo.basePopulation))),
-                '</text><text x="10" y="140" class="txt">',
                 "------------",
-                '</text><text x="10" y="160" class="txt">',
+                '</text><text x="10" y="140" class="txt">',
                 string(abi.encodePacked("Tax Rate: ", Strings.toString(islandInfo.taxRate), "%")),
-                '</text><text x="10" y="180" class="txt">',
+                '</text><text x="10" y="160" class="txt">',
                 string(
                     abi.encodePacked(
                         "Tax Income: ",
@@ -57,7 +68,7 @@ contract IslandsHelper is Ownable {
                         resourceTokenContract.symbol()
                     )
                 ),
-                '</text><text x="10" y="200" class="txt">',
+                '</text><text x="10" y="180" class="txt">',
                 "</text></svg>"
             )
         );
@@ -65,13 +76,57 @@ contract IslandsHelper is Ownable {
         return imageOutput;
     }
 
-    function getAttrOutput(Islands.Island memory islandInfo) public view returns (memory string) {
-        return "hello";
+    function getAttrOutput(Islands.Island memory islandInfo) public view returns (string memory) {
+        (ERC20Mintable __, uint256 taxIncome) = getTaxIncome(islandInfo.tokenId);
+
+        string memory attrOutput = string(
+            abi.encodePacked(
+                '[{ "trait_type": "Climate", "value": "',
+                islandInfo.climate,
+                '" }, { "trait_type": "Terain", "value": "',
+                islandInfo.terrain,
+                '" }, { "trait_type": "Resource", "value": "',
+                islandInfo.resource,
+                '" }, { "trait_type": "Area (sq mi)", "display_type": "number", "value": "',
+                Strings.toString(islandInfo.area),
+                '" }, { "trait_type": "Population", "display_type": "number", "value": "',
+                Strings.toString(islandInfo.population),
+                '" }, { "trait_type": "Tax Rate", "display_type": "boost_percentage", "value": "',
+                Strings.toString(islandInfo.taxRate)
+            )
+        );
+
+        attrOutput = string(
+            abi.encodePacked(
+                attrOutput,
+                '" }, { "trait_type": "Max Population", "display_type": "number", "value": "',
+                Strings.toString(islandInfo.maxPopulation),
+                '" }, { "trait_type": "Tax Income", "display_type": "number", "value": "',
+                Strings.toString(taxIncome / 10**18),
+                '" }]'
+            )
+        );
+
+        return attrOutput;
     }
 
     function getTaxIncome(uint256 tokenId) public view returns (ERC20Mintable, uint256) {
-        Islands.Island memory islandInfo = islandContract.getIslandInfo(tokenId);
-        return (islandInfo.resourceTokenContract, 500 * 10**18);
+        Islands.Attributes memory islandInfo = islandContract.getTokenIdToAttributes(tokenId);
+        ERC20Mintable resourceTokenContract = islandContract.resourcesToTokenContracts(
+            islandInfo.resource
+        );
+
+        uint256 lastHarvest = islandContract.tokenIdToLastHarvest(tokenId);
+        uint256 blockDelta = block.number - lastHarvest;
+
+        uint256 tokenAmount = (blockDelta *
+            climateMultipliers[islandInfo.climate] *
+            terrainMultipliers[islandInfo.terrain] *
+            islandInfo.taxRate *
+            islandInfo.population *
+            ONE) / 5_000_000_000;
+
+        return (resourceTokenContract, tokenAmount);
     }
 
     function tokenURI(uint256 tokenId) public view returns (string memory) {
@@ -84,11 +139,11 @@ contract IslandsHelper is Ownable {
             bytes(
                 string(
                     abi.encodePacked(
-                        '{"name": "Settlement #',
+                        '{"name": "Island #',
                         Strings.toString(tokenId),
-                        '", "description": "Settlements are a turn based civilisation simulator stored entirely on chain, go forth and conquer.", "image": "data:image/svg+xml;base64,',
+                        '", "description": "Islands can be discovered and harvested for their resources. All data is onchain.", "image": "data:image/svg+xml;base64,',
                         Base64.encode(bytes(imageOutput)),
-                        '", "attributes":',
+                        '", "attributes": ',
                         attrOutput,
                         "}"
                     )

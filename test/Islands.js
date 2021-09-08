@@ -1,6 +1,11 @@
 const { expect } = require("chai");
+const { BigNumber } = require("ethers");
+const { parseEther } = require("ethers/lib/utils");
 
 const { resources, climates, terrains } = require("./utils/IslandParams.js");
+const { climateMultipliers, terrainMultipliers } = require("./utils/params.js");
+
+const ONE = BigNumber.from(parseEther("1"));
 
 describe("Islands", function () {
     let IslandsContract;
@@ -90,5 +95,88 @@ describe("Islands", function () {
 
         const tokenURI = await IslandsContract.tokenURI(1873);
         console.log(tokenURI);
+        const result = JSON.parse(Buffer.from(tokenURI.substring(29), "base64").toString());
+
+        expect(result.attributes.length).to.eq(8);
+    });
+
+    it("Should only allow owner to add and remove population editors", async function () {
+        const { deployer } = await ethers.getNamedSigners();
+
+        await expect(IslandsContract.addPopulationEditor(deployer.address)).to.be.revertedWith(
+            "Ownable: caller is not the owner"
+        );
+
+        expect(await IslandsContract.populationEditors(deployer.address)).to.be.equal(false);
+        await IslandsContract.connect(deployer).addPopulationEditor(deployer.address);
+        expect(await IslandsContract.populationEditors(deployer.address)).to.be.equal(true);
+
+        await IslandsContract.connect(deployer).removePopulationEditor(deployer.address);
+        expect(await IslandsContract.populationEditors(deployer.address)).to.be.equal(false);
+    });
+
+    it("Should allow population editor to increase and decrease population", async function () {
+        const { deployer } = await ethers.getNamedSigners();
+
+        await IslandsContract.connect(deployer).addPopulationEditor(deployer.address);
+
+        await IslandsContract.mint(100);
+        await IslandsContract.connect(deployer).setPopulation(100, 15_000);
+
+        expect((await IslandsContract.getIslandInfo(100)).population).to.eql(15_000);
+
+        await expect(
+            IslandsContract.connect(deployer).setPopulation(100, 1_000_000)
+        ).to.be.revertedWith("Population is over max");
+    });
+
+    it("Should harvest tokens", async function () {
+        await IslandsContract.mint(9878);
+
+        const prevBlockNumber = await ethers.provider.getBlockNumber();
+        await ethers.provider.send("evm_mine");
+        await ethers.provider.send("evm_mine");
+        await ethers.provider.send("evm_mine");
+        const currBlockNumber = await ethers.provider.getBlockNumber();
+
+        const blockDelta = BigNumber.from(currBlockNumber - prevBlockNumber);
+        const islandInfo = await IslandsContract.getIslandInfo(9878);
+
+        const climates = ["Temperate", "Rainy", "Humid", "Arid", "Tropical", "Icy"];
+        const terrains = ["Flatlands", "Hilly", "Canyons", "Mountainous"];
+
+        const [resourceContractAddress, taxIncome] = await IslandsContract.getTaxIncome(9878);
+
+        expect(taxIncome).to.eql(
+            blockDelta
+                .mul(BigNumber.from(climateMultipliers[climates.indexOf(islandInfo.climate)]))
+                .mul(BigNumber.from(terrainMultipliers[terrains.indexOf(islandInfo.terrain)]))
+                .mul(BigNumber.from(islandInfo.taxRate))
+                .mul(BigNumber.from(islandInfo.population))
+                .mul(ONE)
+                .div(BigNumber.from("5000000000"))
+        );
+
+        const [account1] = await getUnnamedAccounts();
+        const resourceContract = await ethers.getContractAt(
+            "ERC20Mintable",
+            resourceContractAddress
+        );
+        const balanceBefore = await resourceContract.balanceOf(account1);
+
+        await IslandsContract.harvest(9878);
+
+        expect(await resourceContract.balanceOf(account1)).to.be.eql(
+            balanceBefore.add(
+                blockDelta
+                    .add(1)
+                    .mul(BigNumber.from(climateMultipliers[climates.indexOf(islandInfo.climate)]))
+                    .mul(BigNumber.from(terrainMultipliers[terrains.indexOf(islandInfo.terrain)]))
+                    .mul(BigNumber.from(islandInfo.taxRate))
+                    .mul(BigNumber.from(islandInfo.population))
+                    .mul(ONE)
+                    .div(BigNumber.from("5000000000"))
+            )
+        );
     });
 });

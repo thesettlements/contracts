@@ -1,3 +1,5 @@
+const { climateMultipliers, terrainMultipliers } = require("../test/utils/params");
+
 const deployFunc = async function (hre) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
@@ -31,6 +33,12 @@ const deployFunc = async function (hre) {
 
     await IslandsContract.setHelperContract(IslandsHelperContract.address);
     await IslandsHelperContract.setIslandsContract(IslandsContract.address);
+
+    await IslandsHelperContract.setMultipliers(climateMultipliers, terrainMultipliers);
+
+    for (const resourceToken of resourceTokens) {
+        const tx4 = await resourceToken.addMinter(IslandsContract.address);
+    }
 };
 
 module.exports = deployFunc;

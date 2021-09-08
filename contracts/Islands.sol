@@ -16,8 +16,9 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         uint8 resource;
         uint8 climate;
         uint8 terrain;
-        uint32 area;
         uint8 taxRate;
+        uint32 area;
+        uint32 population;
     }
 
     struct Island {
@@ -28,22 +29,35 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         string terrain;
         uint32 area;
         uint32 maxPopulation;
-        uint32 basePopulation;
+        uint32 population;
         uint8 taxRate;
     }
 
     string[] public resources = ["Fish", "Wood", "Iron", "Silver", "Pearl", "Oil", "Diamond"];
-    string[] public climates = ["Humid", "Arid", "Rainy", "Tropical", "Temperate", "Icy"];
-    string[] public terrains = ["Canyons", "Hilly", "Mountainous", "Flatlands"];
+    string[] public climates = ["Temperate", "Rainy", "Humid", "Arid", "Tropical", "Icy"];
+    string[] public terrains = ["Flatlands", "Hilly", "Canyons", "Mountainous"];
 
     ERC20Mintable[] public resourcesToTokenContracts;
 
     uint256 constant MAX_AREA = 5_000;
-    uint32 constant MAX_POPULATION_PER_SQ_MI = 2000;
+    uint32 constant MAX_POPULATION_PER_SQ_MI = 2_000;
 
     IslandsHelper public helperContract;
 
     mapping(uint256 => Attributes) public tokenIdToAttributes;
+    mapping(uint256 => uint256) public tokenIdToLastHarvest;
+
+    // For future use so that expansion packs can increase/decrease the population
+    // Idk what this could be used for... but probably something cool
+    mapping(address => bool) public populationEditors;
+
+    modifier onlyPopulationEditor() {
+        require(
+            populationEditors[msg.sender] == true,
+            "You don't have permission to edit the population"
+        );
+        _;
+    }
 
     constructor(
         ERC20Mintable fishToken,
@@ -65,6 +79,14 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         ];
     }
 
+    function addPopulationEditor(address newPopulationEditor) public onlyOwner {
+        populationEditors[newPopulationEditor] = true;
+    }
+
+    function removePopulationEditor(address newPopulationEditor) public onlyOwner {
+        populationEditors[newPopulationEditor] = false;
+    }
+
     function mint(uint256 tokenId) public {
         require(!_exists(tokenId), "Island with that id already exists");
         require(
@@ -78,17 +100,23 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         attr.resource = uint8(value < 700 ? value % 3 : value % 7);
 
         value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
-        attr.resource = uint8(value % 6);
+        attr.climate = uint8(value % 6);
 
         value = getRandomNumber(abi.encode(tokenId, "t", block.timestamp), 1000);
         attr.terrain = uint8(value % 4);
 
         value = getRandomNumber(abi.encode(tokenId, "ta", block.timestamp), 1000);
-        attr.taxRate = uint8(value % 50);
+        attr.taxRate = uint8(value % 50) + 1;
 
         attr.area = uint32(getRandomNumber(abi.encode(tokenId, "a", block.timestamp), MAX_AREA));
 
+        uint32 populationPerSqMi = uint32(getRandomNumber(abi.encode(tokenId), 2000));
+        uint32 maxPopulation = populationPerSqMi * attr.area;
+        attr.population = uint32(maxPopulation * getRandomNumber(abi.encode(tokenId), 100)) / 100;
+
         tokenIdToAttributes[tokenId] = attr;
+        tokenIdToLastHarvest[tokenId] = block.number;
+
         _safeMint(msg.sender, tokenId);
     }
 
@@ -103,8 +131,6 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
 
         uint32 populationPerSqMi = uint32(getRandomNumber(abi.encode(tokenId), 2000));
         uint32 maxPopulation = populationPerSqMi * attr.area;
-        uint32 basePopulation = uint32(maxPopulation * getRandomNumber(abi.encode(tokenId), 100)) /
-            100;
 
         return
             Island({
@@ -115,9 +141,21 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
                 terrain: terrains[attr.terrain],
                 area: attr.area,
                 maxPopulation: maxPopulation,
-                basePopulation: basePopulation,
+                population: attr.population,
                 taxRate: attr.taxRate
             });
+    }
+
+    function harvest(uint256 tokenId) public {
+        (ERC20Mintable resourceTokenContract, uint256 taxIncome) = helperContract.getTaxIncome(
+            tokenId
+        );
+
+        resourceTokenContract.mint(ownerOf(tokenId), taxIncome);
+    }
+
+    function getTaxIncome(uint256 tokenId) public view returns (ERC20Mintable, uint256) {
+        return helperContract.getTaxIncome(tokenId);
     }
 
     function setHelperContract(IslandsHelper helperContract_) public {
@@ -126,6 +164,15 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
 
     function getRandomNumber(bytes memory seed, uint256 maxValue) public pure returns (uint256) {
         return uint256(keccak256(abi.encode(seed))) % maxValue;
+    }
+
+    function setPopulation(uint256 tokenId, uint32 population) public onlyPopulationEditor {
+        require(population <= getIslandInfo(tokenId).maxPopulation, "Population is over max");
+        tokenIdToAttributes[tokenId].population = population;
+    }
+
+    function getTokenIdToAttributes(uint256 tokenId) public view returns (Attributes memory) {
+        return tokenIdToAttributes[tokenId];
     }
 
     function _beforeTokenTransfer(
