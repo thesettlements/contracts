@@ -29,7 +29,7 @@ import "./ShipsHelper.sol";
 contract Ships is ERC721, ERC721Enumerable, Ownable {
     struct Attributes {
         uint8 name;
-        uint8 profession;
+        uint8 expedition;
         uint32 length;
         uint32 speed;
     }
@@ -42,26 +42,34 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
     struct Ship {
         uint256 tokenId;
         string name;
-        string profession;
+        string expedition;
         uint32 length;
         uint32 speed;
         Path[] route;
     }
 
+    struct TokenHarvest {
+        address resourceTokenContract;
+        uint256 amount;
+    }
+
     string[] public names = ["Canoe", "Longship", "Clipper", "Galleon", "Man-of-war"];
-    string[] public professions = ["Trader", "Explorer", "Pirate", "Military", "Diplomat"];
+    string[] public expeditions = ["Trader", "Explorer", "Pirate", "Military", "Diplomat"];
 
     uint32[] public speedMultipliers = [10, 15, 35, 25, 25];
-    uint32[] public lengthMultipliers = [10, 20, 20, 50, 60];
+    uint32[] public lengthMultipliers = [5, 10, 10, 30, 40];
 
     ShipsHelper public helperContract;
+    ERC20Mintable public goldTokenContract;
 
     mapping(uint256 => Attributes) public tokenIdToAttributes;
-    mapping(uint256 => uint256) public tokenIdToLastHarvest;
     mapping(uint256 => Path[]) public tokenIdToRoute;
     mapping(uint256 => uint256) public tokenIdToLastRouteUpdate;
+    mapping(uint256 => uint256) public tokenIdToLastSetlHarvest;
 
-    constructor() ERC721("Ships", "SHIP") {}
+    constructor(ERC20Mintable goldTokenContract_) ERC721("Ships", "SHIP") {
+        goldTokenContract = goldTokenContract_;
+    }
 
     function mint(uint256 tokenId) public {
         require(!_exists(tokenId), "Ship with that id already exists");
@@ -73,25 +81,25 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         attr.name = uint8(value < 900 ? value % 3 : value < 950 ? value % 4 : value % 5);
 
         value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
-        attr.profession = uint8(value % 5);
+        attr.expedition = uint8(value % 5);
 
         value = getRandomNumber(abi.encode(tokenId, "l", block.timestamp), 50);
-        attr.length = uint32((value + 1) * uint256(lengthMultipliers[attr.name])) / 10 + 1;
+        attr.length = uint32((value + 1) * uint256(lengthMultipliers[attr.name])) / 10 + 2;
 
         value = getRandomNumber(abi.encode(tokenId, "s", block.timestamp), 100);
-        attr.speed = uint32((value + 1) * uint256(speedMultipliers[attr.name])) / 100 + 1;
+        attr.speed = uint32((value + 1) * uint256(speedMultipliers[attr.name])) / 100 + 2;
 
         tokenIdToAttributes[tokenId] = attr;
-        tokenIdToLastHarvest[tokenId] = block.number;
 
-        _updateRoute(helperContract.getInitialRoute(tokenId, attr.name), tokenId);
+        _updateRoute(helperContract.getInitialRoute(tokenId, attr.name), tokenId, true);
+        tokenIdToLastSetlHarvest[tokenId] = block.number;
         tokenIdToLastRouteUpdate[tokenId] = block.number;
 
         _safeMint(msg.sender, tokenId);
     }
 
     function getShipInfo(uint256 tokenId) public view returns (Ship memory) {
-        require(_exists(tokenId), "Island with that tokenId doesn't exist");
+        require(_exists(tokenId), "Ship with that tokenId doesn't exist");
 
         Attributes memory attr = tokenIdToAttributes[tokenId];
 
@@ -99,20 +107,65 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
             Ship({
                 tokenId: tokenId,
                 name: names[attr.name],
-                profession: professions[attr.profession],
+                expedition: expeditions[attr.expedition],
                 length: attr.length,
                 speed: attr.speed,
                 route: tokenIdToRoute[tokenId]
             });
     }
 
-    function updateRoute(Path[] memory route, uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "You are not the owner");
-        _updateRoute(route, tokenId);
+    function harvest(uint256 tokenId) public {
+        TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(tokenId);
+        address taxDestination = helperContract.getTaxDestination(tokenId);
+
+        for (uint256 i = 0; i < unharvestedTokens.length; i++) {
+            ERC20Mintable(unharvestedTokens[i].resourceTokenContract).mint(
+                ownerOf(tokenId),
+                unharvestedTokens[i].amount
+            );
+
+            goldTokenContract.mint(taxDestination, unharvestedTokens[i].amount / 10);
+            tokenIdToLastRouteUpdate[tokenId] = block.number;
+        }
     }
 
-    function _updateRoute(Path[] memory route, uint256 tokenId) internal {
-        require(helperContract.isValidRoute(route, tokenId), "Invalid route");
+    function harvestSingleToken(uint256 tokenId, ERC20Mintable resourceTokenAddress) public {
+        TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(tokenId);
+        address taxDestination = helperContract.getTaxDestination(tokenId);
+
+        for (uint256 i = 0; i < unharvestedTokens.length; i++) {
+            if (
+                address(resourceTokenAddress) != address(unharvestedTokens[i].resourceTokenContract)
+            ) {
+                continue;
+            }
+
+            ERC20Mintable(unharvestedTokens[i].resourceTokenContract).mint(
+                ownerOf(tokenId),
+                unharvestedTokens[i].amount
+            );
+
+            // 6% tax to the originating settlement
+            goldTokenContract.mint(taxDestination, (unharvestedTokens[i].amount * 6) / 100);
+            tokenIdToLastRouteUpdate[tokenId] = block.number;
+            return;
+        }
+    }
+
+    function getUnharvestedTokens(uint256 tokenId) public view returns (TokenHarvest[] memory) {
+        return helperContract.getUnharvestedTokens(tokenId);
+    }
+
+    function updateRoute(Path[] memory route, uint256 tokenId) public {
+        _updateRoute(route, tokenId, false);
+    }
+
+    function _updateRoute(
+        Path[] memory route,
+        uint256 tokenId,
+        bool init
+    ) internal {
+        require(helperContract.isValidRoute(route, tokenId, msg.sender, init), "Invalid route");
 
         delete tokenIdToRoute[tokenId];
         for (uint256 i = 0; i < route.length; i++) {
@@ -120,10 +173,6 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         }
 
         tokenIdToLastRouteUpdate[tokenId] = block.number;
-    }
-
-    function setHelperContract(ShipsHelper helperContract_) public {
-        helperContract = helperContract_;
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -136,6 +185,10 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
 
     function getRandomNumber(bytes memory seed, uint256 maxValue) public pure returns (uint256) {
         return uint256(keccak256(abi.encode(seed))) % maxValue;
+    }
+
+    function setHelperContract(ShipsHelper helperContract_) public onlyOwner {
+        helperContract = helperContract_;
     }
 
     function _beforeTokenTransfer(

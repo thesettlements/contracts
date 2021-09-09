@@ -15,6 +15,84 @@ describe("Islands", function () {
         const [account1] = await getUnnamedAccounts();
 
         IslandsContract = await ethers.getContract("Islands", account1);
+        IslandsHelperContract = await ethers.getContract("IslandsHelper", account1);
+    });
+
+    it("Should init", async function () {
+        expect(await IslandsContract.resourcesToTokenContracts(0)).to.eql(
+            (await ethers.getContract("FishToken")).address
+        );
+        expect(await IslandsContract.resourcesToTokenContracts(1)).to.eql(
+            (await ethers.getContract("WoodToken")).address
+        );
+        expect(await IslandsContract.resourcesToTokenContracts(2)).to.eql(
+            (await ethers.getContract("IronToken")).address
+        );
+        expect(await IslandsContract.resourcesToTokenContracts(3)).to.eql(
+            (await ethers.getContract("SilverToken")).address
+        );
+        expect(await IslandsContract.resourcesToTokenContracts(4)).to.eql(
+            (await ethers.getContract("PearlToken")).address
+        );
+        expect(await IslandsContract.resourcesToTokenContracts(5)).to.eql(
+            (await ethers.getContract("OilToken")).address
+        );
+        expect(await IslandsContract.resourcesToTokenContracts(6)).to.eql(
+            (await ethers.getContract("DiamondToken")).address
+        );
+    });
+
+    it("Should only allow admin to use setters", async function () {
+        const [account1] = await getUnnamedAccounts();
+        await expect(IslandsContract.addPopulationEditor(account1)).to.be.revertedWith(
+            "Ownable: caller is not the owner"
+        );
+        await expect(IslandsContract.removePopulationEditor(account1)).to.be.revertedWith(
+            "Ownable: caller is not the owner"
+        );
+        await expect(IslandsContract.setHelperContract(account1)).to.be.revertedWith(
+            "Ownable: caller is not the owner"
+        );
+
+        const { deployer } = await ethers.getNamedSigners();
+
+        await IslandsContract.connect(deployer).addPopulationEditor(account1);
+        expect(await IslandsContract.populationEditors(account1)).to.eql(true);
+
+        await IslandsContract.connect(deployer).removePopulationEditor(account1);
+        expect(await IslandsContract.populationEditors(account1)).to.eql(false);
+
+        await IslandsContract.connect(deployer).setHelperContract(account1);
+        expect(await IslandsContract.helperContract()).to.eql(account1);
+    });
+
+    it("Should only let populationEditors to set the population", async function () {
+        const [account1] = await getUnnamedAccounts();
+        const [_, account2] = await ethers.getSigners();
+        const { deployer } = await ethers.getNamedSigners();
+
+        await expect(IslandsContract.connect(account2).setPopulation(1023, 500)).to.be.revertedWith(
+            "You don't have permission to edit the population"
+        );
+
+        await IslandsContract.mint(1023);
+
+        await IslandsContract.connect(deployer).addPopulationEditor(account2.address);
+        await expect(
+            IslandsContract.connect(account2).setPopulation(1023, 100_000_000)
+        ).to.be.revertedWith("Population is over max");
+
+        await IslandsContract.connect(account2).setPopulation(1023, 500);
+
+        expect((await IslandsContract.getIslandInfo(1023)).population).to.be.eq(500);
+    });
+
+    it("Should get tokenId to attributes", async function () {
+        await IslandsContract.mint(2950);
+        const attributes = await IslandsContract.getTokenIdToAttributes(2950);
+        expect(attributes.taxRate).to.be.gt(0);
+        expect(attributes.area).to.be.gt(0);
+        expect(attributes.population).to.be.gt(0);
     });
 
     it("Should mint token", async function () {
@@ -93,11 +171,19 @@ describe("Islands", function () {
     it("Should return correct tokenURI", async function () {
         await IslandsContract.mint(1873);
 
+        const islandInfo = await IslandsContract.getIslandInfo(1873);
+
         const tokenURI = await IslandsContract.tokenURI(1873);
-        console.log(tokenURI);
         const result = JSON.parse(Buffer.from(tokenURI.substring(29), "base64").toString());
 
         expect(result.attributes.length).to.eq(8);
+        expect(result.attributes[0].value).to.eq(islandInfo.climate);
+        expect(result.attributes[1].value).to.eq(islandInfo.terrain);
+        expect(result.attributes[2].value).to.eq(islandInfo.resource);
+        expect(result.attributes[3].value).to.eq(islandInfo.area);
+        expect(result.attributes[4].value).to.eq(islandInfo.population);
+        expect(result.attributes[5].value).to.eq(islandInfo.taxRate);
+        expect(result.attributes[6].value).to.eq(islandInfo.maxPopulation);
     });
 
     it("Should only allow owner to add and remove population editors", async function () {
@@ -178,5 +264,27 @@ describe("Islands", function () {
                     .div(BigNumber.from("5000000000"))
             )
         );
+    });
+
+    describe("Islands Helper", async function () {
+        it("Should only allow owner to use setters", async function () {
+            const [account1] = await getUnnamedAccounts();
+            const { deployer } = await ethers.getNamedSigners();
+
+            await expect(IslandsHelperContract.setIslandsContract(account1)).to.be.revertedWith(
+                "Ownable: caller is not the owner"
+            );
+
+            await expect(IslandsHelperContract.setMultipliers([4, 5], [2, 3])).to.be.revertedWith(
+                "Ownable: caller is not the owner"
+            );
+
+            IslandsHelperContract.connect(deployer).setIslandsContract(account1);
+            expect(await IslandsHelperContract.islandContract()).to.be.equal(account1);
+
+            await IslandsHelperContract.connect(deployer).setMultipliers([4, 5], [2, 3]);
+            expect(await IslandsHelperContract.climateMultipliers(0)).to.be.equal(4);
+            expect(await IslandsHelperContract.terrainMultipliers(1)).to.be.equal(3);
+        });
     });
 });

@@ -16,16 +16,21 @@ const deployFunc = async function (hre) {
         ethers.getContract("DiamondToken"),
     ]);
 
+    const SettlementsExperienceTokenContract = await ethers.getContract(
+        "SettlementsExperienceToken"
+    );
+    const GoldTokenContract = await ethers.getContract("GoldToken");
+
     await deploy("Ships", {
         from: deployer,
         log: true,
-        args: [],
+        args: [GoldTokenContract.address],
     });
 
     await deploy("ShipsHelper", {
         from: deployer,
         log: true,
-        args: [],
+        args: [SettlementsExperienceTokenContract.address],
     });
 
     const ShipsHelperContract = await ethers.getContract("ShipsHelper");
@@ -39,14 +44,11 @@ const deployFunc = async function (hre) {
     await ShipsHelperContract.setSettlementsContract(SettlementsContract.address);
     await ShipsHelperContract.setIslandsContract(IslandsContract.address);
 
-    // await IslandsContract.setHelperContract(IslandsHelperContract.address);
-    // await IslandsHelperContract.setIslandsContract(IslandsContract.address);
-
-    // await IslandsHelperContract.setMultipliers(climateMultipliers, terrainMultipliers);
-
-    // for (const resourceToken of resourceTokens) {
-    //     const tx4 = await resourceToken.addMinter(IslandsContract.address);
-    // }
+    await SettlementsExperienceTokenContract.addMinter(ShipsContract.address);
+    await GoldTokenContract.addMinter(ShipsContract.address);
+    for (const resourceToken of resourceTokens) {
+        const tx4 = await resourceToken.addMinter(ShipsContract.address);
+    }
 };
 
 module.exports = deployFunc;

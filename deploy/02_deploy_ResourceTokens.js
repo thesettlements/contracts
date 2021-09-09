@@ -17,6 +17,11 @@ const deployFunc = async function (hre) {
         { name: "Pearl Settlements Token", symbol: "PRL", deploymentName: "PearlToken" },
         { name: "Oil Settlements Token", symbol: "OIL", deploymentName: "OilToken" },
         { name: "Diamond Settlements Token", symbol: "DMND", deploymentName: "DiamondToken" },
+        {
+            name: "Settlements Experience",
+            symbol: "SETL",
+            deploymentName: "SettlementsExperienceToken",
+        },
     ];
 
     for (const { name, symbol, deploymentName } of tokens) {

@@ -15,7 +15,7 @@ contract IslandsHelper is Ownable {
     uint8[] public climateMultipliers;
     uint8[] public terrainMultipliers;
 
-    function setIslandsContract(Islands islandContract_) public {
+    function setIslandsContract(Islands islandContract_) public onlyOwner {
         islandContract = islandContract_;
     }
 
@@ -87,11 +87,11 @@ contract IslandsHelper is Ownable {
                 islandInfo.terrain,
                 '" }, { "trait_type": "Resource", "value": "',
                 islandInfo.resource,
-                '" }, { "trait_type": "Area (sq mi)", "display_type": "number", "value": "',
+                '" }, { "trait_type": "Area (sq mi)", "display_type": "number", "value": ',
                 Strings.toString(islandInfo.area),
-                '" }, { "trait_type": "Population", "display_type": "number", "value": "',
+                ' }, { "trait_type": "Population", "display_type": "number", "value": ',
                 Strings.toString(islandInfo.population),
-                '" }, { "trait_type": "Tax Rate", "display_type": "boost_percentage", "value": "',
+                ' }, { "trait_type": "Tax Rate", "display_type": "boost_percentage", "value": ',
                 Strings.toString(islandInfo.taxRate)
             )
         );
@@ -99,11 +99,11 @@ contract IslandsHelper is Ownable {
         attrOutput = string(
             abi.encodePacked(
                 attrOutput,
-                '" }, { "trait_type": "Max Population", "display_type": "number", "value": "',
+                ' }, { "trait_type": "Max Population", "display_type": "number", "value": ',
                 Strings.toString(islandInfo.maxPopulation),
-                '" }, { "trait_type": "Tax Income", "display_type": "number", "value": "',
+                ' }, { "trait_type": "Tax Income", "display_type": "number", "value": ',
                 Strings.toString(taxIncome / 10**18),
-                '" }]'
+                " }]"
             )
         );
 

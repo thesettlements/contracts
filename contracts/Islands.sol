@@ -79,6 +79,7 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         ];
     }
 
+    /** Setters */
     function addPopulationEditor(address newPopulationEditor) public onlyOwner {
         populationEditors[newPopulationEditor] = true;
     }
@@ -87,6 +88,59 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         populationEditors[newPopulationEditor] = false;
     }
 
+    function setHelperContract(IslandsHelper helperContract_) public onlyOwner {
+        helperContract = helperContract_;
+    }
+
+    function setPopulation(uint256 tokenId, uint32 population) public onlyPopulationEditor {
+        require(population <= getIslandInfo(tokenId).maxPopulation, "Population is over max");
+        tokenIdToAttributes[tokenId].population = population;
+    }
+
+    /** Getters */
+    function getTaxIncome(uint256 tokenId) public view returns (ERC20Mintable, uint256) {
+        return helperContract.getTaxIncome(tokenId);
+    }
+
+    function getRandomNumber(bytes memory seed, uint256 maxValue) public pure returns (uint256) {
+        return uint256(keccak256(abi.encode(seed))) % maxValue;
+    }
+
+    function getTokenIdToAttributes(uint256 tokenId) public view returns (Attributes memory) {
+        return tokenIdToAttributes[tokenId];
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        return helperContract.tokenURI(tokenId);
+    }
+
+    function getPopulationPerSqMi(uint256 tokenId) public pure returns (uint32) {
+        return uint32(getRandomNumber(abi.encode(tokenId), MAX_POPULATION_PER_SQ_MI)) + 1;
+    }
+
+    function getIslandInfo(uint256 tokenId) public view returns (Island memory) {
+        require(_exists(tokenId), "Island with that tokenId doesn't exist");
+
+        Attributes memory attr = tokenIdToAttributes[tokenId];
+
+        uint32 populationPerSqMi = getPopulationPerSqMi(tokenId);
+        uint32 maxPopulation = populationPerSqMi * attr.area;
+
+        return
+            Island({
+                tokenId: tokenId,
+                resource: resources[attr.resource],
+                resourceTokenContract: resourcesToTokenContracts[attr.resource],
+                climate: climates[attr.climate],
+                terrain: terrains[attr.terrain],
+                area: attr.area,
+                maxPopulation: maxPopulation,
+                population: attr.population,
+                taxRate: attr.taxRate
+            });
+    }
+
+    /** State modifications */
     function mint(uint256 tokenId) public {
         require(!_exists(tokenId), "Island with that id already exists");
         require(
@@ -108,42 +162,20 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         value = getRandomNumber(abi.encode(tokenId, "ta", block.timestamp), 1000);
         attr.taxRate = uint8(value % 50) + 1;
 
-        attr.area = uint32(getRandomNumber(abi.encode(tokenId, "a", block.timestamp), MAX_AREA));
+        attr.area =
+            uint32(getRandomNumber(abi.encode(tokenId, "a", block.timestamp), MAX_AREA)) +
+            1;
 
-        uint32 populationPerSqMi = uint32(getRandomNumber(abi.encode(tokenId), 2000));
+        uint32 populationPerSqMi = getPopulationPerSqMi(tokenId);
         uint32 maxPopulation = populationPerSqMi * attr.area;
-        attr.population = uint32(maxPopulation * getRandomNumber(abi.encode(tokenId), 100)) / 100;
+        attr.population =
+            (uint32(maxPopulation * getRandomNumber(abi.encode(tokenId), 100)) / 100) +
+            10;
 
         tokenIdToAttributes[tokenId] = attr;
         tokenIdToLastHarvest[tokenId] = block.number;
 
         _safeMint(msg.sender, tokenId);
-    }
-
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        return helperContract.tokenURI(tokenId);
-    }
-
-    function getIslandInfo(uint256 tokenId) public view returns (Island memory) {
-        require(_exists(tokenId), "Island with that tokenId doesn't exist");
-
-        Attributes memory attr = tokenIdToAttributes[tokenId];
-
-        uint32 populationPerSqMi = uint32(getRandomNumber(abi.encode(tokenId), 2000));
-        uint32 maxPopulation = populationPerSqMi * attr.area;
-
-        return
-            Island({
-                tokenId: tokenId,
-                resource: resources[attr.resource],
-                resourceTokenContract: resourcesToTokenContracts[attr.resource],
-                climate: climates[attr.climate],
-                terrain: terrains[attr.terrain],
-                area: attr.area,
-                maxPopulation: maxPopulation,
-                population: attr.population,
-                taxRate: attr.taxRate
-            });
     }
 
     function harvest(uint256 tokenId) public {
@@ -154,27 +186,7 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
         resourceTokenContract.mint(ownerOf(tokenId), taxIncome);
     }
 
-    function getTaxIncome(uint256 tokenId) public view returns (ERC20Mintable, uint256) {
-        return helperContract.getTaxIncome(tokenId);
-    }
-
-    function setHelperContract(IslandsHelper helperContract_) public {
-        helperContract = helperContract_;
-    }
-
-    function getRandomNumber(bytes memory seed, uint256 maxValue) public pure returns (uint256) {
-        return uint256(keccak256(abi.encode(seed))) % maxValue;
-    }
-
-    function setPopulation(uint256 tokenId, uint32 population) public onlyPopulationEditor {
-        require(population <= getIslandInfo(tokenId).maxPopulation, "Population is over max");
-        tokenIdToAttributes[tokenId].population = population;
-    }
-
-    function getTokenIdToAttributes(uint256 tokenId) public view returns (Attributes memory) {
-        return tokenIdToAttributes[tokenId];
-    }
-
+    /** Library overrides */
     function _beforeTokenTransfer(
         address from,
         address to,
