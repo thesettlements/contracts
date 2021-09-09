@@ -47,8 +47,9 @@ const speedMultipliers = [10, 15, 35, 40, 40];
 const lengthMultipliers = [10, 20, 20, 50, 60];
 
 const names = ["Canoe", "Longship", "Clipper", "Galleon", "Man-of-war"];
-const professions = ["Trader", "Explorer", "Pirate", "Military", "Diplomat"];
-const routeMaxLengths = [2, 3, 4, 5, 6];
+const expeditions = ["Trader", "Explorer", "Pirate", "Military", "Diplomat"];
+const nameToMaxRouteLength = [2, 3, 4, 5, 5];
+const expeditionMultipliers = [3, 2, 2, 1, 1];
 
 module.exports = {
     _sizes,
@@ -66,6 +67,7 @@ module.exports = {
     speedMultipliers,
     lengthMultipliers,
     names,
-    professions,
-    routeMaxLengths,
+    expeditions,
+    nameToMaxRouteLength,
+    expeditionMultipliers,
 };

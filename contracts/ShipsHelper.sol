@@ -57,7 +57,7 @@ contract ShipsHelper is Ownable {
         uint256 lastRouteUpdate = shipsContract.tokenIdToLastRouteUpdate(tokenId);
         uint256 blockDelta = block.number - lastRouteUpdate;
 
-        uint256 sailingDuration = (15 * 300) / shipInfo.speed;
+        uint256 sailingDuration = getSailingDuration(shipInfo);
         uint256 harvestDuration = 120;
 
         uint256 progressIntoCurrentPath = blockDelta % (sailingDuration + harvestDuration);
@@ -75,7 +75,7 @@ contract ShipsHelper is Ownable {
         uint256 lastRouteUpdate = shipsContract.tokenIdToLastRouteUpdate(tokenId);
         uint256 blockDelta = block.number - lastRouteUpdate;
 
-        uint256 sailingDuration = (15 * 300) / shipInfo.speed;
+        uint256 sailingDuration = getSailingDuration(shipInfo);
         uint256 harvestDuration = 120;
 
         uint256 singlePathDuration = sailingDuration + harvestDuration;
@@ -93,12 +93,16 @@ contract ShipsHelper is Ownable {
         return shipInfo.route[currentTargetIndex];
     }
 
+    function getSailingDuration(Ships.Ship memory shipInfo) public pure returns (uint256) {
+        return (15 * 200) / shipInfo.speed;
+    }
+
     function getBlocksUntilNextPhase(uint256 tokenId) public view returns (uint256) {
         Ships.Ship memory shipInfo = shipsContract.getShipInfo(tokenId);
         uint256 lastRouteUpdate = shipsContract.tokenIdToLastRouteUpdate(tokenId);
         uint256 blockDelta = block.number - lastRouteUpdate;
 
-        uint256 sailingDuration = (15 * 200) / shipInfo.speed;
+        uint256 sailingDuration = getSailingDuration(shipInfo);
         uint256 harvestDuration = 120;
 
         uint256 singlePathDuration = sailingDuration + harvestDuration;
@@ -122,7 +126,7 @@ contract ShipsHelper is Ownable {
         uint256 lastRouteUpdate = shipsContract.tokenIdToLastRouteUpdate(tokenId);
         uint256 blockDelta = block.number - lastRouteUpdate;
 
-        uint256 sailingDuration = (15 * 300) / shipInfo.speed;
+        uint256 sailingDuration = getSailingDuration(shipInfo);
         uint256 harvestDuration = 120;
         uint256 singlePathDuration = sailingDuration + harvestDuration;
         uint256 totalPathDuration = singlePathDuration * shipInfo.route.length;
@@ -135,11 +139,11 @@ contract ShipsHelper is Ownable {
         // Fucking piece of shit, why hasn't any of the eth big brains figured out how to do a hashmap in memory
         for (uint256 i = 1; i < shipInfo.route.length; i++) {
             // offset = totalPathDuration - singlePathDuration * i
-            // amountOfTimesHarvestedTarget = blockDelta + offset / totalPathDuration
-            uint256 tokensToHarvest = ((blockDelta + (totalPathDuration - singlePathDuration * i)) /
-                totalPathDuration) *
+            // amountOfTimesHarvestedTarget = (blockDelta + offset) / totalPathDuration
+            uint256 tokensToHarvest = (((blockDelta +
+                (totalPathDuration - singlePathDuration * i)) / totalPathDuration) *
                 ONE *
-                expeditionMultipliers[shipAttr.expedition];
+                expeditionMultipliers[shipAttr.expedition]) / 300;
 
             (ERC20Mintable resourceTokenContract, uint256 __) = settlementsContract
                 .getUnharvestedTokens(shipInfo.route[i].tokenId);
@@ -348,11 +352,11 @@ contract ShipsHelper is Ownable {
                 shipInfo.name,
                 '" }, { "trait_type": "Expedition", "value": "',
                 shipInfo.expedition,
-                '" }, { "trait_type": "Length (ft)", "display_type": "number", "value": "',
+                '" }, { "trait_type": "Length (ft)", "display_type": "number", "value": ',
                 Strings.toString(uint256(shipInfo.length)),
-                '" }, { "trait_type": "Speed (km/h)", "display_type": "number", "value": "',
+                ' }, { "trait_type": "Speed (km/h)", "display_type": "number", "value": ',
                 Strings.toString(uint256(shipInfo.speed)),
-                '" }, { "trait_type": "Trade Route", "value": [',
+                ' }, { "trait_type": "Trade Route", "value": [',
                 routeStr,
                 "]"
             )

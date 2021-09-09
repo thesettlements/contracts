@@ -1,16 +1,3 @@
-// ships can sail to islands and collect resources there
-// once you've been away from a settlement for too long you have to sail back
-// you can only sail to an island if there is enough population room
-// each time you go back to a settlement you have to recharge for 15 blocks
-// you can buy a ship for 3000 $WOOD or 10000 $GOLD
-// every x blocks of sailing you discover SETL tokens
-// When you sail away from an island you send % of the tokens you minted depending on the island's tax rate
-
-// Canoe, Longship, Clipper, Galleon, Man-of-war
-// Trader, Explorer, Pirate, Military, Diplomat
-// strength multiplier: 1,2,3,8,10
-// capacity multiplier: 1,2,3,8,8
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
@@ -21,9 +8,11 @@ import "./ERC20Mintable.sol";
 import "./ShipsHelper.sol";
 
 // The ships
+// **music**
 // Sweet dreams are made of this
 // Who am I to disagree
 // I travel the world and the seven seas :pepe jamming:
+// (fr tho, when r twitch emotes gunna be added to sol natspec standard... fukin boomers man)
 // @author 1929
 
 contract Ships is ERC721, ERC721Enumerable, Ownable {
@@ -71,33 +60,12 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         goldTokenContract = goldTokenContract_;
     }
 
-    function mint(uint256 tokenId) public {
-        require(!_exists(tokenId), "Ship with that id already exists");
-        require(tokenId <= 3000, "Ship id is invalid");
-
-        Attributes memory attr;
-
-        uint256 value = getRandomNumber(abi.encode(tokenId, "n", block.timestamp), 1000);
-        attr.name = uint8(value < 900 ? value % 3 : value < 950 ? value % 4 : value % 5);
-
-        value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
-        attr.expedition = uint8(value % 5);
-
-        value = getRandomNumber(abi.encode(tokenId, "l", block.timestamp), 50);
-        attr.length = uint32((value + 1) * uint256(lengthMultipliers[attr.name])) / 10 + 2;
-
-        value = getRandomNumber(abi.encode(tokenId, "s", block.timestamp), 100);
-        attr.speed = uint32((value + 1) * uint256(speedMultipliers[attr.name])) / 100 + 2;
-
-        tokenIdToAttributes[tokenId] = attr;
-
-        _updateRoute(helperContract.getInitialRoute(tokenId, attr.name), tokenId, true);
-        tokenIdToLastSetlHarvest[tokenId] = block.number;
-        tokenIdToLastRouteUpdate[tokenId] = block.number;
-
-        _safeMint(msg.sender, tokenId);
+    /** Setters */
+    function setHelperContract(ShipsHelper helperContract_) public onlyOwner {
+        helperContract = helperContract_;
     }
 
+    /** Getters */
     function getShipInfo(uint256 tokenId) public view returns (Ship memory) {
         require(_exists(tokenId), "Ship with that tokenId doesn't exist");
 
@@ -112,6 +80,57 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
                 speed: attr.speed,
                 route: tokenIdToRoute[tokenId]
             });
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        return helperContract.tokenURI(tokenId);
+    }
+
+    function getTokenIdToAttributes(uint256 tokenId) public view returns (Attributes memory) {
+        return tokenIdToAttributes[tokenId];
+    }
+
+    function getRandomNumber(bytes memory seed, uint256 maxValue) public pure returns (uint256) {
+        return uint256(keccak256(abi.encode(seed))) % maxValue;
+    }
+
+    function getUnharvestedTokens(uint256 tokenId) public view returns (TokenHarvest[] memory) {
+        return helperContract.getUnharvestedTokens(tokenId);
+    }
+
+    function getSailingDuration(uint256 tokenId) public view returns (uint256) {
+        Ship memory shipInfo = getShipInfo(tokenId);
+        return helperContract.getSailingDuration(shipInfo);
+    }
+
+    /** State modifications */
+    function mint(uint256 tokenId) public {
+        require(!_exists(tokenId), "Ship with that id already exists");
+        require(tokenId <= 3000, "Ship id is invalid");
+
+        Attributes memory attr;
+
+        uint256 value = getRandomNumber(abi.encode(tokenId, "n", block.timestamp), 1000);
+        attr.name = uint8(value < 900 ? value % 3 : value < 950 ? value % 4 : value % 5);
+
+        value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
+        attr.expedition = uint8(value % 5);
+
+        value = getRandomNumber(abi.encode(tokenId, "l", block.timestamp), 50);
+        attr.length = uint32((value + 1) * uint256(lengthMultipliers[attr.name])) / 10 + 2;
+        attr.length = attr.length < 5 ? 5 : attr.length;
+
+        value = getRandomNumber(abi.encode(tokenId, "s", block.timestamp), 100);
+        attr.speed = uint32((value + 1) * uint256(speedMultipliers[attr.name])) / 100 + 2;
+        attr.speed = attr.speed < 5 ? 5 : attr.speed;
+
+        tokenIdToAttributes[tokenId] = attr;
+
+        _updateRoute(helperContract.getInitialRoute(tokenId, attr.name), tokenId, true);
+        tokenIdToLastSetlHarvest[tokenId] = block.number;
+        tokenIdToLastRouteUpdate[tokenId] = block.number;
+
+        _safeMint(msg.sender, tokenId);
     }
 
     function harvest(uint256 tokenId) public {
@@ -152,10 +171,6 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         }
     }
 
-    function getUnharvestedTokens(uint256 tokenId) public view returns (TokenHarvest[] memory) {
-        return helperContract.getUnharvestedTokens(tokenId);
-    }
-
     function updateRoute(Path[] memory route, uint256 tokenId) public {
         _updateRoute(route, tokenId, false);
     }
@@ -175,22 +190,7 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         tokenIdToLastRouteUpdate[tokenId] = block.number;
     }
 
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        return helperContract.tokenURI(tokenId);
-    }
-
-    function getTokenIdToAttributes(uint256 tokenId) public view returns (Attributes memory) {
-        return tokenIdToAttributes[tokenId];
-    }
-
-    function getRandomNumber(bytes memory seed, uint256 maxValue) public pure returns (uint256) {
-        return uint256(keccak256(abi.encode(seed))) % maxValue;
-    }
-
-    function setHelperContract(ShipsHelper helperContract_) public onlyOwner {
-        helperContract = helperContract_;
-    }
-
+    /** Library overrides */
     function _beforeTokenTransfer(
         address from,
         address to,

@@ -37,9 +37,6 @@ async function migrateContract(tokenId, legacyContract, v2Contract) {
     const dto = await buildMigrationPayload(tokenId, legacyContract);
     const approvalTx = await legacyContract.setApprovalForAll(v2Contract.address, true);
 
-    console.log(dto);
-    console.log("approval", approvalTx);
-
     const claim = await v2Contract.claim(tokenId, {
         size: dto.size,
         spirit: dto.spirit,
@@ -51,8 +48,6 @@ async function migrateContract(tokenId, legacyContract, v2Contract) {
     });
 
     await claim.wait();
-
-    console.log("CLAIM", claim);
 }
 
 module.exports = {

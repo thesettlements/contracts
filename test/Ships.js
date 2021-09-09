@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const { parseEther } = require("ethers/lib/utils");
+const { isEvmStep } = require("hardhat/internal/hardhat-network/stack-traces/message-trace");
 
 const { resources, climates, terrains } = require("./utils/IslandParams.js");
 const { migrateContract } = require("./utils/migrate.helper.js");
@@ -10,6 +11,9 @@ const {
     professions,
     names,
     routeMaxLengths,
+    expeditions,
+    nameToMaxRouteLength,
+    expeditionMultipliers,
 } = require("./utils/params.js");
 
 const ONE = BigNumber.from(parseEther("1"));
@@ -25,7 +29,132 @@ describe("Ships", function () {
         ShipsHelperContract = await ethers.getContract("ShipsHelper", account1);
         IslandsContract = await ethers.getContract("Islands", account1);
         SettlementsContract = await ethers.getContract("SettlementsV2", account1);
+        SettlementsExperienceTokenContract = await ethers.getContract(
+            "SettlementsExperienceToken",
+            account1
+        );
         LegacyContract = await ethers.getContract("SettlementsLegacy", account1);
+    });
+
+    it("Should only allow owner to use setters", async function () {
+        const [account1] = await getUnnamedAccounts();
+        await expect(ShipsContract.setHelperContract(account1)).to.be.revertedWith(
+            "Ownable: caller is not the owner"
+        );
+
+        const { deployer } = await ethers.getNamedSigners();
+        await ShipsContract.connect(deployer).setHelperContract(account1);
+
+        expect(await ShipsContract.helperContract()).to.be.equal(account1);
+    });
+
+    it("Should get ship info", async function () {
+        await ShipsContract.mint(1980);
+
+        // Ensure idempotency
+        expect(await ShipsContract.getShipInfo(1980)).to.eql(await ShipsContract.getShipInfo(1980));
+
+        const attr = await ShipsContract.tokenIdToAttributes(1980);
+        const info = await ShipsContract.getShipInfo(1980);
+
+        expect(info.name).to.eq(names[attr.name]);
+        expect(info.expedition).to.eq(expeditions[attr.expedition]);
+        expect(info.length).to.gt(4);
+        expect(info.speed).to.gt(4);
+        expect(info.route.length).to.eq(nameToMaxRouteLength[attr.name]);
+    });
+
+    it("Should return correct tokenURI", async function () {
+        await ShipsContract.mint(1873);
+
+        let i = 0;
+        while (i < 20) {
+            i++;
+            await ethers.provider.send("evm_mine");
+        }
+
+        const attr = await ShipsContract.tokenIdToAttributes(1873);
+        const tokenURI = await ShipsContract.tokenURI(1873);
+        console.log(tokenURI);
+        const result = JSON.parse(Buffer.from(tokenURI.substring(29), "base64").toString());
+
+        expect(result.attributes.length).to.eq(5);
+        expect(result.attributes[0].value).to.eq(names[attr.name]);
+        expect(result.attributes[1].value).to.eq(expeditions[attr.expedition]);
+        expect(result.attributes[2].value).to.gte(5);
+        expect(result.attributes[3].value).to.gte(5);
+        expect(result.attributes[4].value.length).to.eq(nameToMaxRouteLength[attr.name]);
+    });
+
+    it("Should get tokenId to attributes", async function () {
+        await ShipsContract.mint(1873);
+        const attributes = await ShipsContract.getTokenIdToAttributes(1873);
+
+        console.log("before attr", attributes);
+
+        expect(attributes._length).to.gte(5);
+        expect(attributes.speed).to.gte(5);
+    });
+
+    it("Should get random number in range", async function () {
+        expect(await ShipsContract.getRandomNumber("0x1203", 10)).to.be.lt(10);
+        expect(await ShipsContract.getRandomNumber("0x1206", 10)).to.be.lt(10);
+        expect(await ShipsContract.getRandomNumber("0x1207", 10)).to.be.lt(10);
+        expect(await ShipsContract.getRandomNumber("0x1201", 10)).to.be.lt(10);
+        expect(await ShipsContract.getRandomNumber("0x1208", 10)).to.be.lt(10);
+        expect(await ShipsContract.getRandomNumber("0x1276", 10)).to.be.lt(10);
+        expect(await ShipsContract.getRandomNumber("0x1232", 10)).to.be.lt(10);
+        expect(await ShipsContract.getRandomNumber("0x1224", 10)).to.be.lt(10);
+
+        // Small prob of failing this test but should be fine
+        expect(await ShipsContract.getRandomNumber("0x1224", 500000)).to.be.gt(10);
+    });
+
+    it("Should get unharvested tokens", async function () {
+        await ShipsContract.mint(1029);
+
+        const { route } = await ShipsContract.getShipInfo(1029);
+        for (const { tokenContract, tokenId } of route) {
+            if (tokenContract == SettlementsContract.address) {
+                await LegacyContract.settle(tokenId.toString());
+                await migrateContract(tokenId.toString(), LegacyContract, SettlementsContract);
+                continue;
+            }
+
+            const contract = await ethers.getContractAt("Islands", tokenContract);
+            contract.mint(tokenId.toString());
+        }
+
+        let blockDelta = route.length;
+        let unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+
+        expect(unharvestedTokens.length).to.eq(1);
+        expect(unharvestedTokens[unharvestedTokens.length - 1].amount).to.gt(0);
+        expect(unharvestedTokens[unharvestedTokens.length - 1].resourceTokenContract).to.eq(
+            SettlementsExperienceTokenContract.address
+        );
+
+        const sailingDuration = await ShipsContract.getSailingDuration(1029);
+        const harvestDuration = 120;
+        const blocksUntilHarvestFinish =
+            Number(sailingDuration.toString()) + harvestDuration - blockDelta;
+        for (let i = 0; i < blocksUntilHarvestFinish; i++) {
+            await ethers.provider.send("evm_mine");
+        }
+
+        const attributes = await ShipsContract.getTokenIdToAttributes(1029);
+        const expectedHarvestAtSingleTarget = ONE.mul(
+            BigNumber.from(expeditionMultipliers[attributes.expedition])
+        ).div(300);
+
+        unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+        expect(unharvestedTokens[0].amount).to.eq(expectedHarvestAtSingleTarget);
+        expect(unharvestedTokens.length).to.eq(2);
+        expect(unharvestedTokens[unharvestedTokens.length - 1].amount).to.gt(0);
+
+        // TODO: Have tested single path,
+        // now need to test going to the 2nd, 3rd path
+        // need to test rolling back over to the start too
     });
 
     it("Should mint token", async function () {
@@ -56,35 +185,6 @@ describe("Ships", function () {
 
     it("Should only not allow mints of 3000", async function () {
         await expect(ShipsContract.mint(3001)).to.be.revertedWith("Ship id is invalid");
-    });
-
-    it("Should get ships info", async function () {
-        await ShipsContract.mint(1980);
-
-        // Ensure idempotency
-        expect(await ShipsContract.getShipInfo(1980)).to.eql(await ShipsContract.getShipInfo(1980));
-
-        const attr = await ShipsContract.tokenIdToAttributes(1980);
-        const info = await ShipsContract.getShipInfo(1980);
-
-        expect(info.name).to.eq(names[attr.name]);
-        expect(info.profession).to.eq(professions[attr.profession]);
-        expect(info.route.length).to.eq(routeMaxLengths[attr.name]);
-    });
-
-    it("Should return correct tokenURI", async function () {
-        await ShipsContract.mint(1873);
-
-        let i = 0;
-        while (i < 20) {
-            i++;
-            await ethers.provider.send("evm_mine");
-        }
-        const tokenURI = await ShipsContract.tokenURI(1873);
-        console.log(tokenURI);
-        const result = JSON.parse(Buffer.from(tokenURI.substring(29), "base64").toString());
-
-        expect(result.attributes.length).to.eq(5);
     });
 
     it("Should get correct status", async function () {
