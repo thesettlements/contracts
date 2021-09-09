@@ -49,7 +49,7 @@ describe("Islands", function () {
         await expect(IslandsContract.mint(9901)).to.be.revertedWith("Island id is invalid");
 
         const { deployer } = await ethers.getNamedSigners();
-        IslandsContract.connect(deployer).mint(9901);
+        await IslandsContract.connect(deployer).mint(9901);
 
         expect(await IslandsContract.ownerOf(9901)).to.equal(deployer.address);
         expect(await IslandsContract.balanceOf(deployer.address)).to.equal(1);

@@ -43,6 +43,13 @@ const moraleMultipliers = [2, 3, 1, 1, 3, 2, 1, 1, 1, 2];
 const climateMultipliers = [5, 4, 3, 2, 1, 1];
 const terrainMultipliers = [3, 3, 2, 1];
 
+const speedMultipliers = [10, 15, 35, 40, 40];
+const lengthMultipliers = [10, 20, 20, 50, 60];
+
+const names = ["Canoe", "Longship", "Clipper", "Galleon", "Man-of-war"];
+const professions = ["Trader", "Explorer", "Pirate", "Military", "Diplomat"];
+const routeMaxLengths = [2, 3, 4, 5, 6];
+
 module.exports = {
     _sizes,
     _spirits,
@@ -56,4 +63,9 @@ module.exports = {
     moraleMultipliers,
     climateMultipliers,
     terrainMultipliers,
+    speedMultipliers,
+    lengthMultipliers,
+    names,
+    professions,
+    routeMaxLengths,
 };
