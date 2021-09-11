@@ -21,6 +21,8 @@ contract ShipsHelper is Ownable {
     uint256[] public setlNameMultipliers = [1, 2, 2, 4, 4];
     uint256[] public setlExpeditionMultipliers = [1, 3, 1, 2, 2];
 
+    Ships.TokenHarvest[][] public nameToCost;
+
     SettlementsV2 public settlementsContract;
     Islands public islandsContract;
 
@@ -47,6 +49,19 @@ contract ShipsHelper is Ownable {
 
     function setIslandsContract(Islands islandsContract_) public onlyOwner {
         islandsContract = islandsContract_;
+    }
+
+    function setCosts(Ships.TokenHarvest[][] memory costs) public onlyOwner {
+        delete nameToCost;
+
+        for (uint256 i = 0; i < costs.length; i++) {
+            nameToCost.push();
+            for (uint256 s = 0; s < costs[i].length; s++) {
+                nameToCost[i].push();
+                nameToCost[i][s].resourceTokenContract = costs[i][s].resourceTokenContract;
+                nameToCost[i][s].amount = costs[i][s].amount;
+            }
+        }
     }
 
     /** Getters */
@@ -136,17 +151,18 @@ contract ShipsHelper is Ownable {
         );
         uint256 tokensSeen = 0;
 
-        // Fucking piece of shit, why hasn't any of the eth big brains figured out how to do a hashmap in memory
+        // why hasn't any of the eth big brains figured out how to do a hashmap in memory
         for (uint256 i = 1; i < shipInfo.route.length; i++) {
             // offset = totalPathDuration - singlePathDuration * i
             // amountOfTimesHarvestedTarget = (blockDelta + offset) / totalPathDuration
             uint256 tokensToHarvest = (((blockDelta +
                 (totalPathDuration - singlePathDuration * i)) / totalPathDuration) *
                 ONE *
-                expeditionMultipliers[shipAttr.expedition]) / 300;
+                expeditionMultipliers[shipAttr.expedition]);
 
-            (ERC20Mintable resourceTokenContract, uint256 __) = settlementsContract
-                .getUnharvestedTokens(shipInfo.route[i].tokenId);
+            (ERC20Mintable resourceTokenContract, uint256 __) = islandsContract.getTaxIncome(
+                shipInfo.route[i].tokenId
+            );
 
             uint256 index = shipInfo.route.length;
             for (uint256 s = 0; s < listOfTokensToHarvest.length; s++) {
@@ -187,14 +203,14 @@ contract ShipsHelper is Ownable {
 
     function getUnharvestedSettlementTokens(uint256 tokenId) public view returns (uint256) {
         Ships.Attributes memory shipAttr = shipsContract.getTokenIdToAttributes(tokenId);
-        uint256 lastSetlHarvest = shipsContract.tokenIdToLastSetlHarvest(tokenId);
+        uint256 lastSetlHarvest = shipsContract.tokenIdToLastRouteUpdate(tokenId);
         uint256 blockDelta = block.number - lastSetlHarvest;
 
         // timeSinceLastSettleHarvest * expeditionMultiplier * shipMultiplier
-        uint256 unharvestedSetlTokens = setlExpeditionMultipliers[shipAttr.expedition] *
+        uint256 unharvestedSetlTokens = (setlExpeditionMultipliers[shipAttr.expedition] *
             setlNameMultipliers[shipAttr.name] *
             blockDelta *
-            ONE;
+            ONE) / 1000;
 
         return unharvestedSetlTokens;
     }
@@ -212,7 +228,7 @@ contract ShipsHelper is Ownable {
         uint256 routeLength = nameToMaxRouteLength[name];
         Ships.Path[] memory routes = new Ships.Path[](routeLength);
 
-        uint256 settlementId = getRandomNumber(abi.encodePacked("s", tokenId), 10_000);
+        uint256 settlementId = getRandomNumber(abi.encodePacked("s", tokenId), 9_900);
         routes[0] = Ships.Path({
             tokenId: settlementId,
             tokenContract: address(settlementsContract)
@@ -228,6 +244,10 @@ contract ShipsHelper is Ownable {
 
     function getRandomNumber(bytes memory seed, uint256 maxValue) public pure returns (uint256) {
         return uint256(keccak256(abi.encode(seed))) % maxValue;
+    }
+
+    function getCost(uint8 name) public view returns (Ships.TokenHarvest[] memory) {
+        return nameToCost[name];
     }
 
     // We'll disable trading route updates for now until the mechanics are clearer
@@ -257,6 +277,7 @@ contract ShipsHelper is Ownable {
         );
 
         string memory routeStr = "";
+        uint256 svgY = 160;
         for (uint256 i = 0; i < shipInfo.route.length; i++) {
             string memory symbol = shipInfo.route[i].tokenContract == address(settlementsContract)
                 ? "S"
@@ -273,27 +294,22 @@ contract ShipsHelper is Ownable {
                     suffix
                 )
             );
+
+            if ((i + 1) % 4 == 0) {
+                svgY += 20;
+                routeStr = string(
+                    abi.encodePacked(
+                        routeStr,
+                        '</text><text x="10" y="',
+                        Strings.toString(svgY),
+                        '" class="txt">'
+                    )
+                );
+            }
         }
 
         Status shipStatus = getStatus(shipInfo.tokenId);
         Ships.Path memory currentTarget = getCurrentTarget(shipInfo.tokenId);
-
-        Ships.TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(shipInfo.tokenId);
-        string memory unharvestedTokenStr = "";
-        for (uint256 i = 0; i < unharvestedTokens.length; i++) {
-            // TODO: go to new line every 3 resources
-            string memory suffix = i == unharvestedTokens.length - 1 ? "" : ", ";
-            unharvestedTokenStr = string(
-                abi.encodePacked(
-                    unharvestedTokenStr,
-                    Strings.toString(unharvestedTokens[i].amount / ONE),
-                    " $",
-                    ERC20Mintable(unharvestedTokens[i].resourceTokenContract).symbol(),
-                    suffix
-                )
-            );
-        }
-
         imageOutput = string(
             abi.encodePacked(
                 imageOutput,
@@ -314,11 +330,48 @@ contract ShipsHelper is Ownable {
                 '</text><text x="10" y="160" class="txt">',
                 "Route: ",
                 routeStr,
-                '</text><text x="10" y="180" class="txt">',
+                abi.encodePacked(
+                    '</text><text x="10" y="',
+                    Strings.toString(svgY + 20),
+                    '" class="txt">'
+                ),
                 "------------",
-                '</text><text x="10" y="200" class="txt">'
+                abi.encodePacked(
+                    '</text><text x="10" y="',
+                    Strings.toString(svgY + 40),
+                    '" class="txt">'
+                )
             )
         );
+
+        svgY += 40;
+        Ships.TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(shipInfo.tokenId);
+        string memory unharvestedTokenStr = "";
+        for (uint256 i = 0; i < unharvestedTokens.length; i++) {
+            // TODO: go to new line every 3 resources
+            string memory suffix = i == unharvestedTokens.length - 1 ? "" : ", ";
+            unharvestedTokenStr = string(
+                abi.encodePacked(
+                    unharvestedTokenStr,
+                    Strings.toString(unharvestedTokens[0].amount / ONE),
+                    " $",
+                    ERC20Mintable(unharvestedTokens[0].resourceTokenContract).symbol(),
+                    suffix
+                )
+            );
+
+            if ((i + 1) % 3 == 0) {
+                svgY += 20;
+                unharvestedTokenStr = string(
+                    abi.encodePacked(
+                        unharvestedTokenStr,
+                        '</text><text x="10" y="',
+                        Strings.toString(svgY),
+                        '" class="txt">'
+                    )
+                );
+            }
+        }
 
         imageOutput = string(abi.encodePacked(imageOutput, unharvestedTokenStr, "</text></svg>"));
 

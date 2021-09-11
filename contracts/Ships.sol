@@ -56,6 +56,8 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
     mapping(uint256 => uint256) public tokenIdToLastRouteUpdate;
     mapping(uint256 => uint256) public tokenIdToLastSetlHarvest;
 
+    uint256 purchasedShipsCount = 3000;
+
     constructor(ERC20Mintable goldTokenContract_) ERC721("Ships", "SHIP") {
         goldTokenContract = goldTokenContract_;
     }
@@ -108,44 +110,29 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         require(!_exists(tokenId), "Ship with that id already exists");
         require(tokenId <= 3000, "Ship id is invalid");
 
-        Attributes memory attr;
-
         uint256 value = getRandomNumber(abi.encode(tokenId, "n", block.timestamp), 1000);
-        attr.name = uint8(value < 900 ? value % 3 : value < 950 ? value % 4 : value % 5);
+        uint8 name = uint8(value < 900 ? value % 3 : value < 950 ? value % 4 : value % 5);
 
-        value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
-        attr.expedition = uint8(value % 5);
-
-        value = getRandomNumber(abi.encode(tokenId, "l", block.timestamp), 50);
-        attr.length = uint32((value + 1) * uint256(lengthMultipliers[attr.name])) / 10 + 2;
-        attr.length = attr.length < 5 ? 5 : attr.length;
-
-        value = getRandomNumber(abi.encode(tokenId, "s", block.timestamp), 100);
-        attr.speed = uint32((value + 1) * uint256(speedMultipliers[attr.name])) / 100 + 2;
-        attr.speed = attr.speed < 5 ? 5 : attr.speed;
-
-        tokenIdToAttributes[tokenId] = attr;
-
-        _updateRoute(helperContract.getInitialRoute(tokenId, attr.name), tokenId, true);
-        tokenIdToLastSetlHarvest[tokenId] = block.number;
-        tokenIdToLastRouteUpdate[tokenId] = block.number;
-
-        _safeMint(msg.sender, tokenId);
+        _mintShip(name, tokenId);
     }
 
     function harvest(uint256 tokenId) public {
         TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(tokenId);
-        address taxDestination = helperContract.getTaxDestination(tokenId);
 
+        uint256 totalGoldTax = 0;
         for (uint256 i = 0; i < unharvestedTokens.length; i++) {
             ERC20Mintable(unharvestedTokens[i].resourceTokenContract).mint(
                 ownerOf(tokenId),
                 unharvestedTokens[i].amount
             );
 
-            goldTokenContract.mint(taxDestination, unharvestedTokens[i].amount / 10);
+            // 6% tax to the originating settlement
+            totalGoldTax += (unharvestedTokens[i].amount * 6) / 100;
             tokenIdToLastRouteUpdate[tokenId] = block.number;
         }
+
+        address taxDestination = helperContract.getTaxDestination(tokenId);
+        goldTokenContract.mint(taxDestination, totalGoldTax);
     }
 
     function harvestSingleToken(uint256 tokenId, ERC20Mintable resourceTokenAddress) public {
@@ -188,6 +175,42 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         }
 
         tokenIdToLastRouteUpdate[tokenId] = block.number;
+    }
+
+    function purchaseShip(uint8 name) public {
+        TokenHarvest[] memory cost = helperContract.getCost(name);
+
+        for (uint256 i = 0; i < cost.length; i++) {
+            ERC20Mintable(cost[i].resourceTokenContract).burnFrom(msg.sender, cost[i].amount);
+        }
+
+        purchasedShipsCount += 1;
+        _mintShip(name, purchasedShipsCount);
+    }
+
+    function _mintShip(uint8 name, uint256 tokenId) internal {
+        Attributes memory attr;
+
+        attr.name = name;
+
+        uint256 value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
+        attr.expedition = uint8(value % 5);
+
+        value = getRandomNumber(abi.encode(tokenId, "l", block.timestamp), 50);
+        attr.length = uint32((value + 1) * uint256(lengthMultipliers[attr.name])) / 10 + 2;
+        attr.length = attr.length < 5 ? 5 : attr.length;
+
+        value = getRandomNumber(abi.encode(tokenId, "s", block.timestamp), 100);
+        attr.speed = uint32((value + 1) * uint256(speedMultipliers[attr.name])) / 100 + 2;
+        attr.speed = attr.speed < 5 ? 5 : attr.speed;
+
+        tokenIdToAttributes[tokenId] = attr;
+
+        _updateRoute(helperContract.getInitialRoute(tokenId, attr.name), tokenId, true);
+        tokenIdToLastSetlHarvest[tokenId] = block.number;
+        tokenIdToLastRouteUpdate[tokenId] = block.number;
+
+        _safeMint(msg.sender, tokenId);
     }
 
     /** Library overrides */

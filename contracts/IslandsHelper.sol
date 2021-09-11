@@ -124,7 +124,7 @@ contract IslandsHelper is Ownable {
             terrainMultipliers[islandInfo.terrain] *
             islandInfo.taxRate *
             islandInfo.population *
-            ONE) / 5_000_000_000;
+            ONE) / 1_000_000_000;
 
         return (resourceTokenContract, tokenAmount);
     }

@@ -1,3 +1,4 @@
+const { parseUnits } = require("ethers/lib/utils");
 const { climateMultipliers, terrainMultipliers } = require("../test/utils/params");
 
 const deployFunc = async function (hre) {
@@ -34,11 +35,12 @@ const deployFunc = async function (hre) {
     await IslandsContract.setHelperContract(IslandsHelperContract.address);
     await IslandsHelperContract.setIslandsContract(IslandsContract.address);
 
-    await IslandsHelperContract.setMultipliers(climateMultipliers, terrainMultipliers);
-
     for (const resourceToken of resourceTokens) {
         const tx4 = await resourceToken.addMinter(IslandsContract.address);
     }
+
+    const tx = await IslandsHelperContract.setMultipliers(climateMultipliers, terrainMultipliers);
+    await tx.wait();
 };
 
 module.exports = deployFunc;
