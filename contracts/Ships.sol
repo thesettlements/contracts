@@ -45,7 +45,7 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
     string[] public names = ["Canoe", "Longship", "Clipper", "Galleon", "Man-of-war"];
     string[] public expeditions = ["Trader", "Explorer", "Pirate", "Military", "Diplomat"];
 
-    uint32[] public speedMultipliers = [10, 15, 35, 25, 25];
+    uint32[] public speedMultipliers = [10, 20, 50, 40, 40];
     uint32[] public lengthMultipliers = [5, 10, 10, 30, 40];
 
     ShipsHelper public helperContract;
@@ -54,9 +54,11 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
     mapping(uint256 => Attributes) public tokenIdToAttributes;
     mapping(uint256 => Path[]) public tokenIdToRoute;
     mapping(uint256 => uint256) public tokenIdToLastRouteUpdate;
-    mapping(uint256 => uint256) public tokenIdToLastSetlHarvest;
 
-    uint256 purchasedShipsCount = 3000;
+    uint256 purchasedShipsCount = 1000;
+    uint256 maxPurchaseLimit = 10_000;
+
+    mapping(address => bool) permissionedMinters;
 
     constructor(ERC20Mintable goldTokenContract_) ERC721("Ships", "SHIP") {
         goldTokenContract = goldTokenContract_;
@@ -65,6 +67,17 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
     /** Setters */
     function setHelperContract(ShipsHelper helperContract_) public onlyOwner {
         helperContract = helperContract_;
+    }
+
+    function setMaxPurchaseLimit(uint256 maxPurchaseLimit_) public onlyOwner {
+        maxPurchaseLimit = maxPurchaseLimit_;
+    }
+
+    // For L1 -> L2 bridges
+    // This allows NFTs to be minted on the L2 and then bridged to the L1 as oppose
+    // to just being minted on the L1 and transferred to the L2.
+    function togglePermissionedMinter(address minter, bool enabled) public onlyOwner {
+        permissionedMinters[minter] = enabled;
     }
 
     /** Getters */
@@ -108,7 +121,7 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
     /** State modifications */
     function mint(uint256 tokenId) public {
         require(!_exists(tokenId), "Ship with that id already exists");
-        require(tokenId <= 3000, "Ship id is invalid");
+        require(tokenId <= 999, "Ship id is invalid");
 
         uint256 value = getRandomNumber(abi.encode(tokenId, "n", block.timestamp), 1000);
         uint8 name = uint8(value < 900 ? value % 3 : value < 950 ? value % 4 : value % 5);
@@ -116,8 +129,26 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
         _mintShip(name, tokenId);
     }
 
+    // Intended for use by L2->L1 bridges
+    // This is necessary since we want to allow minting on both L2 and L1.
+    // In order to maintain synchronicity between both chains, the L2 withdrawal tx
+    // must be able to mint new tokens on L1 if it doesn't already exist in escrow.
+    function permissionedMint(
+        uint256 tokenId,
+        Attributes memory attr,
+        Path[] memory route
+    ) public {
+        require(permissionedMinters[msg.sender], "You are not a permissioned minter");
+        require(!_exists(tokenId), "Can't mint token that already exists");
+
+        tokenIdToAttributes[tokenId] = attr;
+        _updateRoute(route, tokenId, true);
+        _safeMint(msg.sender, tokenId);
+    }
+
     function harvest(uint256 tokenId) public {
         TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(tokenId);
+        tokenIdToLastRouteUpdate[tokenId] = block.number;
 
         uint256 totalGoldTax = 0;
         for (uint256 i = 0; i < unharvestedTokens.length; i++) {
@@ -128,34 +159,10 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
 
             // 6% tax to the originating settlement
             totalGoldTax += (unharvestedTokens[i].amount * 6) / 100;
-            tokenIdToLastRouteUpdate[tokenId] = block.number;
         }
 
         address taxDestination = helperContract.getTaxDestination(tokenId);
         goldTokenContract.mint(taxDestination, totalGoldTax);
-    }
-
-    function harvestSingleToken(uint256 tokenId, ERC20Mintable resourceTokenAddress) public {
-        TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(tokenId);
-        address taxDestination = helperContract.getTaxDestination(tokenId);
-
-        for (uint256 i = 0; i < unharvestedTokens.length; i++) {
-            if (
-                address(resourceTokenAddress) != address(unharvestedTokens[i].resourceTokenContract)
-            ) {
-                continue;
-            }
-
-            ERC20Mintable(unharvestedTokens[i].resourceTokenContract).mint(
-                ownerOf(tokenId),
-                unharvestedTokens[i].amount
-            );
-
-            // 6% tax to the originating settlement
-            goldTokenContract.mint(taxDestination, (unharvestedTokens[i].amount * 6) / 100);
-            tokenIdToLastRouteUpdate[tokenId] = block.number;
-            return;
-        }
     }
 
     function updateRoute(Path[] memory route, uint256 tokenId) public {
@@ -178,8 +185,12 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
     }
 
     function purchaseShip(uint8 name) public {
-        TokenHarvest[] memory cost = helperContract.getCost(name);
+        require(
+            purchasedShipsCount <= maxPurchaseLimit,
+            "Maximum amount of ships have been purchased"
+        );
 
+        TokenHarvest[] memory cost = helperContract.getCost(name);
         for (uint256 i = 0; i < cost.length; i++) {
             ERC20Mintable(cost[i].resourceTokenContract).burnFrom(msg.sender, cost[i].amount);
         }
@@ -193,23 +204,24 @@ contract Ships is ERC721, ERC721Enumerable, Ownable {
 
         attr.name = name;
 
-        uint256 value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
+        uint256 value = getRandomNumber(abi.encode(tokenId, "c"), 1000);
         attr.expedition = uint8(value % 5);
 
-        value = getRandomNumber(abi.encode(tokenId, "l", block.timestamp), 50);
+        value = getRandomNumber(abi.encode(tokenId, "l"), 50);
         attr.length = uint32((value + 1) * uint256(lengthMultipliers[attr.name])) / 10 + 2;
-        attr.length = attr.length < 5 ? 5 : attr.length;
+        attr.length = attr.length < lengthMultipliers[attr.name]
+            ? lengthMultipliers[attr.name]
+            : attr.length;
 
-        value = getRandomNumber(abi.encode(tokenId, "s", block.timestamp), 100);
+        value = getRandomNumber(abi.encode(tokenId, "s"), 100);
         attr.speed = uint32((value + 1) * uint256(speedMultipliers[attr.name])) / 100 + 2;
-        attr.speed = attr.speed < 5 ? 5 : attr.speed;
+        attr.speed = attr.speed < speedMultipliers[attr.name] / 2
+            ? speedMultipliers[attr.name] / 2
+            : attr.speed;
 
         tokenIdToAttributes[tokenId] = attr;
 
         _updateRoute(helperContract.getInitialRoute(tokenId, attr.name), tokenId, true);
-        tokenIdToLastSetlHarvest[tokenId] = block.number;
-        tokenIdToLastRouteUpdate[tokenId] = block.number;
-
         _safeMint(msg.sender, tokenId);
     }
 

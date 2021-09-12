@@ -151,7 +151,7 @@ describe("Ships", function () {
         let attributes = await ShipsContract.getTokenIdToAttributes(1029);
         let expectedHarvestAtSingleTarget = ONE.mul(
             BigNumber.from(expeditionMultipliers[attributes.expedition])
-        ).div(300);
+        );
 
         unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
         expect(unharvestedTokens[0].amount).to.eq(expectedHarvestAtSingleTarget);
@@ -299,7 +299,7 @@ describe("Ships", function () {
         const [account1, account2] = await getUnnamedAccounts();
 
         let i = 0;
-        while (i < 500) {
+        while (i < 1000) {
             i++;
             await ethers.provider.send("evm_mine");
         }

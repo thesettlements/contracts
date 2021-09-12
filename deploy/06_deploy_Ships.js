@@ -49,19 +49,19 @@ const deployFunc = async function (hre) {
         [
             {
                 resourceTokenContract: (await ethers.getContract("WoodToken")).address,
-                amount: parseEther("1000"),
-            },
-        ],
-        [
-            {
-                resourceTokenContract: (await ethers.getContract("WoodToken")).address,
-                amount: parseEther("2000"),
-            },
-        ],
-        [
-            {
-                resourceTokenContract: (await ethers.getContract("WoodToken")).address,
                 amount: parseEther("3000"),
+            },
+        ],
+        [
+            {
+                resourceTokenContract: (await ethers.getContract("WoodToken")).address,
+                amount: parseEther("10000"),
+            },
+        ],
+        [
+            {
+                resourceTokenContract: (await ethers.getContract("WoodToken")).address,
+                amount: parseEther("10000"),
             },
             {
                 resourceTokenContract: (await ethers.getContract("GoldToken")).address,
@@ -71,11 +71,11 @@ const deployFunc = async function (hre) {
         [
             {
                 resourceTokenContract: (await ethers.getContract("WoodToken")).address,
-                amount: parseEther("10000"),
+                amount: parseEther("20000"),
             },
             {
                 resourceTokenContract: (await ethers.getContract("GoldToken")).address,
-                amount: parseEther("10000"),
+                amount: parseEther("20000"),
             },
             {
                 resourceTokenContract: (await ethers.getContract("IronToken")).address,
@@ -85,15 +85,15 @@ const deployFunc = async function (hre) {
         [
             {
                 resourceTokenContract: (await ethers.getContract("WoodToken")).address,
-                amount: parseEther("20000"),
+                amount: parseEther("30000"),
             },
             {
                 resourceTokenContract: (await ethers.getContract("GoldToken")).address,
-                amount: parseEther("20000"),
+                amount: parseEther("30000"),
             },
             {
                 resourceTokenContract: (await ethers.getContract("IronToken")).address,
-                amount: parseEther("20000"),
+                amount: parseEther("30000"),
             },
         ],
     ]);

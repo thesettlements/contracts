@@ -9,11 +9,11 @@ async function main() {
         hre.network.config.SettlementsLegacyAddress
     );
 
-    const islandsId = 2000;
-    const shipsId = 2000;
+    const islandsId = 448;
+    const shipsId = 448;
 
     console.log("Minting Island...");
-    let tx = await IslandsContract.mint(islandsId);
+    let tx = await IslandsContract.mint(islandsId, { gasLimit: 500_000 });
     await tx.wait();
 
     console.log("Minting Ship...");
@@ -25,7 +25,10 @@ async function main() {
     console.log(route);
     for (const { tokenContract, tokenId } of route) {
         if (tokenContract == SettlementsContract.address) {
-            await LegacyContract.settle(tokenId.toString());
+            console.log("Settling ", tokenId.toString());
+            tx = await LegacyContract.settle(tokenId.toString());
+            await tx.wait();
+            console.log("Migrating ", tokenId.toString());
             await migrateContract(tokenId.toString(), LegacyContract, SettlementsContract);
             continue;
         }
@@ -39,7 +42,8 @@ async function main() {
     await IslandsContract.transferFrom(
         deployer.address,
         "0x89324327750e10A040A05e5286A5fB66A9Ba71C4",
-        islandsId
+        islandsId,
+        { gasLimit: 1_000_000 }
     );
 
     await ShipsContract.transferFrom(

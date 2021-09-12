@@ -115,7 +115,7 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
     }
 
     function getPopulationPerSqMi(uint256 tokenId) public pure returns (uint32) {
-        return uint32(getRandomNumber(abi.encode(tokenId), MAX_POPULATION_PER_SQ_MI)) + 1;
+        return uint32(getRandomNumber(abi.encode(tokenId), MAX_POPULATION_PER_SQ_MI)) + 10;
     }
 
     function getIslandInfo(uint256 tokenId) public view returns (Island memory) {
@@ -150,21 +150,19 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
 
         Attributes memory attr;
 
-        uint256 value = getRandomNumber(abi.encode(tokenId, "r", block.timestamp), 1000);
+        uint256 value = getRandomNumber(abi.encode(tokenId, "r"), 1000);
         attr.resource = uint8(value < 700 ? value % 3 : value % 7);
 
-        value = getRandomNumber(abi.encode(tokenId, "c", block.timestamp), 1000);
+        value = getRandomNumber(abi.encode(tokenId, "c"), 1000);
         attr.climate = uint8(value % 6);
 
-        value = getRandomNumber(abi.encode(tokenId, "t", block.timestamp), 1000);
+        value = getRandomNumber(abi.encode(tokenId, "t"), 1000);
         attr.terrain = uint8(value % 4);
 
-        value = getRandomNumber(abi.encode(tokenId, "ta", block.timestamp), 1000);
+        value = getRandomNumber(abi.encode(tokenId, "ta"), 1000);
         attr.taxRate = uint8(value % 50) + 1;
 
-        attr.area =
-            uint32(getRandomNumber(abi.encode(tokenId, "a", block.timestamp), MAX_AREA)) +
-            1;
+        attr.area = uint32(getRandomNumber(abi.encode(tokenId, "a"), MAX_AREA)) + 1;
 
         uint32 populationPerSqMi = getPopulationPerSqMi(tokenId);
         uint32 maxPopulation = populationPerSqMi * attr.area;
@@ -183,6 +181,7 @@ contract Islands is ERC721, ERC721Enumerable, Ownable {
             tokenId
         );
 
+        tokenIdToLastHarvest[tokenId] = block.number;
         resourceTokenContract.mint(ownerOf(tokenId), taxIncome);
     }
 

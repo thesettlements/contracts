@@ -295,7 +295,7 @@ contract ShipsHelper is Ownable {
                 )
             );
 
-            if ((i + 1) % 4 == 0) {
+            if ((i + 1) % 4 == 0 && i + 1 != shipInfo.route.length) {
                 svgY += 20;
                 routeStr = string(
                     abi.encodePacked(
@@ -348,14 +348,13 @@ contract ShipsHelper is Ownable {
         Ships.TokenHarvest[] memory unharvestedTokens = getUnharvestedTokens(shipInfo.tokenId);
         string memory unharvestedTokenStr = "";
         for (uint256 i = 0; i < unharvestedTokens.length; i++) {
-            // TODO: go to new line every 3 resources
             string memory suffix = i == unharvestedTokens.length - 1 ? "" : ", ";
             unharvestedTokenStr = string(
                 abi.encodePacked(
                     unharvestedTokenStr,
-                    Strings.toString(unharvestedTokens[0].amount / ONE),
+                    Strings.toString(unharvestedTokens[i].amount / ONE),
                     " $",
-                    ERC20Mintable(unharvestedTokens[0].resourceTokenContract).symbol(),
+                    ERC20Mintable(unharvestedTokens[i].resourceTokenContract).symbol(),
                     suffix
                 )
             );
