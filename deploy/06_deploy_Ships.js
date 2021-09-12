@@ -7,16 +7,6 @@ const deployFunc = async function (hre) {
 
     const { deployer } = await getNamedAccounts();
 
-    const resourceTokens = await Promise.all([
-        ethers.getContract("FishToken"),
-        ethers.getContract("WoodToken"),
-        ethers.getContract("IronToken"),
-        ethers.getContract("SilverToken"),
-        ethers.getContract("PearlToken"),
-        ethers.getContract("OilToken"),
-        ethers.getContract("DiamondToken"),
-    ]);
-
     const SettlementsExperienceTokenContract = await ethers.getContract(
         "SettlementsExperienceToken"
     );
@@ -99,10 +89,7 @@ const deployFunc = async function (hre) {
     ]);
 
     await SettlementsExperienceTokenContract.addMinter(ShipsContract.address);
-    await GoldTokenContract.addMinter(ShipsContract.address);
-    for (const resourceToken of resourceTokens) {
-        const tx4 = await resourceToken.addMinter(ShipsContract.address);
-    }
+    // await GoldTokenContract.addMinter(ShipsContract.address);
 };
 
 module.exports = deployFunc;

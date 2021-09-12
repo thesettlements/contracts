@@ -35,9 +35,9 @@ const deployFunc = async function (hre) {
     await IslandsContract.setHelperContract(IslandsHelperContract.address);
     await IslandsHelperContract.setIslandsContract(IslandsContract.address);
 
-    for (const resourceToken of resourceTokens) {
-        const tx4 = await resourceToken.addMinter(IslandsContract.address);
-    }
+    // for (const resourceToken of resourceTokens) {
+    //     const tx4 = await resourceToken.addMinter(IslandsContract.address);
+    // }
 
     const tx = await IslandsHelperContract.setMultipliers(climateMultipliers, terrainMultipliers);
     await tx.wait();
