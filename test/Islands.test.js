@@ -240,7 +240,7 @@ describe("Islands", function () {
                 .mul(BigNumber.from(islandInfo.taxRate))
                 .mul(BigNumber.from(islandInfo.population))
                 .mul(ONE)
-                .div(BigNumber.from("5000000000"))
+                .div(BigNumber.from("1000000000"))
         );
 
         const [account1] = await getUnnamedAccounts();
@@ -261,7 +261,7 @@ describe("Islands", function () {
                     .mul(BigNumber.from(islandInfo.taxRate))
                     .mul(BigNumber.from(islandInfo.population))
                     .mul(ONE)
-                    .div(BigNumber.from("5000000000"))
+                    .div(BigNumber.from("1000000000"))
             )
         );
     });

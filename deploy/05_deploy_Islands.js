@@ -32,15 +32,16 @@ const deployFunc = async function (hre) {
     const IslandsHelperContract = await ethers.getContract("IslandsHelper");
     const IslandsContract = await ethers.getContract("Islands");
 
-    await IslandsContract.setHelperContract(IslandsHelperContract.address);
-    await IslandsHelperContract.setIslandsContract(IslandsContract.address);
+    console.log("Updating helpers and islands contract...");
+    // await IslandsContract.setHelperContract(IslandsHelperContract.address);
+    // await IslandsHelperContract.setIslandsContract(IslandsContract.address);
 
     // for (const resourceToken of resourceTokens) {
     //     const tx4 = await resourceToken.addMinter(IslandsContract.address);
     // }
 
-    const tx = await IslandsHelperContract.setMultipliers(climateMultipliers, terrainMultipliers);
-    await tx.wait();
+    // const tx = await IslandsHelperContract.setMultipliers(climateMultipliers, terrainMultipliers);
+    // await tx.wait();
 };
 
 module.exports = deployFunc;

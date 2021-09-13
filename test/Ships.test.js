@@ -50,13 +50,13 @@ describe("Ships", function () {
     });
 
     it("Should get ship info", async function () {
-        await ShipsContract.mint(1980);
+        await ShipsContract.mint(888);
 
         // Ensure idempotency
-        expect(await ShipsContract.getShipInfo(1980)).to.eql(await ShipsContract.getShipInfo(1980));
+        expect(await ShipsContract.getShipInfo(888)).to.eql(await ShipsContract.getShipInfo(888));
 
-        const attr = await ShipsContract.tokenIdToAttributes(1980);
-        const info = await ShipsContract.getShipInfo(1980);
+        const attr = await ShipsContract.tokenIdToAttributes(888);
+        const info = await ShipsContract.getShipInfo(888);
 
         expect(info.name).to.eq(names[attr.name]);
         expect(info.expedition).to.eq(expeditions[attr.expedition]);
@@ -66,7 +66,7 @@ describe("Ships", function () {
     });
 
     it("Should return correct tokenURI", async function () {
-        await ShipsContract.mint(1873);
+        await ShipsContract.mint(123);
 
         let i = 0;
         while (i < 20) {
@@ -74,8 +74,8 @@ describe("Ships", function () {
             await ethers.provider.send("evm_mine");
         }
 
-        const attr = await ShipsContract.tokenIdToAttributes(1873);
-        const tokenURI = await ShipsContract.tokenURI(1873);
+        const attr = await ShipsContract.tokenIdToAttributes(123);
+        const tokenURI = await ShipsContract.tokenURI(123);
         console.log(tokenURI);
         const result = JSON.parse(Buffer.from(tokenURI.substring(29), "base64").toString());
 
@@ -88,8 +88,8 @@ describe("Ships", function () {
     });
 
     it("Should get tokenId to attributes", async function () {
-        await ShipsContract.mint(1873);
-        const attributes = await ShipsContract.getTokenIdToAttributes(1873);
+        await ShipsContract.mint(123);
+        const attributes = await ShipsContract.getTokenIdToAttributes(123);
 
         expect(attributes._length).to.gte(5);
         expect(attributes.speed).to.gte(5);
@@ -110,9 +110,9 @@ describe("Ships", function () {
     });
 
     it("Should get unharvested tokens", async function () {
-        await ShipsContract.mint(1029);
+        await ShipsContract.mint(777);
 
-        const { route } = await ShipsContract.getShipInfo(1029);
+        const { route } = await ShipsContract.getShipInfo(777);
         const beforeBlockNumber = await ethers.provider.getBlockNumber();
         for (const { tokenContract, tokenId } of route) {
             if (tokenContract == SettlementsContract.address) {
@@ -127,7 +127,7 @@ describe("Ships", function () {
         const afterBlockNumber = await ethers.provider.getBlockNumber();
 
         let blockDelta = afterBlockNumber - beforeBlockNumber;
-        let unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+        let unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
 
         expect(unharvestedTokens.length).to.eq(1);
         expect(unharvestedTokens[unharvestedTokens.length - 1].amount).to.gt(0);
@@ -135,25 +135,25 @@ describe("Ships", function () {
             SettlementsExperienceTokenContract.address
         );
 
-        const sailingDuration = await ShipsContract.getSailingDuration(1029);
+        const sailingDuration = await ShipsContract.getSailingDuration(777);
         const harvestDuration = 120;
         let blocksUntilHarvestFinish =
             Number(sailingDuration.toString()) + harvestDuration - blockDelta;
         for (let i = 0; i < blocksUntilHarvestFinish; i++) {
             if (blocksUntilHarvestFinish - 10 < i) {
-                unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+                unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
                 expect(unharvestedTokens.length).to.eq(1);
             }
 
             await ethers.provider.send("evm_mine");
         }
 
-        let attributes = await ShipsContract.getTokenIdToAttributes(1029);
+        let attributes = await ShipsContract.getTokenIdToAttributes(777);
         let expectedHarvestAtSingleTarget = ONE.mul(
             BigNumber.from(expeditionMultipliers[attributes.expedition])
         );
 
-        unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+        unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
         expect(unharvestedTokens[0].amount).to.eq(expectedHarvestAtSingleTarget);
         expect(unharvestedTokens.length).to.eq(2);
         expect(unharvestedTokens[unharvestedTokens.length - 1].amount).to.gt(0);
@@ -165,7 +165,7 @@ describe("Ships", function () {
         blocksUntilHarvestFinish = Number(sailingDuration.toString()) + harvestDuration;
         for (let i = 0; i < blocksUntilHarvestFinish; i++) {
             if (blocksUntilHarvestFinish - 10 < i) {
-                unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+                unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
                 expect(unharvestedTokens.length).to.eq(2);
             }
 
@@ -173,12 +173,12 @@ describe("Ships", function () {
         }
 
         if (route.length === 3) {
-            attributes = await ShipsContract.getTokenIdToAttributes(1029);
+            attributes = await ShipsContract.getTokenIdToAttributes(777);
             expectedHarvestAtSingleTarget = ONE.mul(
                 BigNumber.from(expeditionMultipliers[attributes.expedition])
             ).div(300);
 
-            unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+            unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
             expect(unharvestedTokens[1].amount).to.eq(expectedHarvestAtSingleTarget);
             expect(unharvestedTokens[0].amount).to.eq(expectedHarvestAtSingleTarget);
             expect(unharvestedTokens.length).to.eq(3);
@@ -188,14 +188,14 @@ describe("Ships", function () {
             blocksUntilHarvestFinish = Number(sailingDuration.toString()) + harvestDuration;
             for (let i = 0; i < blocksUntilHarvestFinish; i++) {
                 if (blocksUntilHarvestFinish - 10 < i) {
-                    unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+                    unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
                     expect(unharvestedTokens.length).to.eq(3);
                 }
 
                 await ethers.provider.send("evm_mine");
             }
 
-            unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+            unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
             expect(unharvestedTokens[1].amount).to.eq(expectedHarvestAtSingleTarget);
             expect(unharvestedTokens[0].amount).to.eq(expectedHarvestAtSingleTarget);
 
@@ -203,7 +203,7 @@ describe("Ships", function () {
             blocksUntilHarvestFinish = Number(sailingDuration.toString()) + harvestDuration;
             for (let i = 0; i < blocksUntilHarvestFinish; i++) {
                 if (blocksUntilHarvestFinish - 10 < i) {
-                    unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+                    unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
                     expect(unharvestedTokens.length).to.eq(3);
                     expect(unharvestedTokens[0].amount).to.eq(expectedHarvestAtSingleTarget);
                 }
@@ -211,7 +211,7 @@ describe("Ships", function () {
                 await ethers.provider.send("evm_mine");
             }
 
-            unharvestedTokens = await ShipsContract.getUnharvestedTokens(1029);
+            unharvestedTokens = await ShipsContract.getUnharvestedTokens(777);
             expect(unharvestedTokens[1].amount).to.eq(expectedHarvestAtSingleTarget);
             expect(unharvestedTokens[0].amount).to.eq(expectedHarvestAtSingleTarget.mul(2));
         }
@@ -248,9 +248,9 @@ describe("Ships", function () {
     });
 
     it("Should harvest tokens", async function () {
-        await ShipsContract.mint(1234);
+        await ShipsContract.mint(222);
 
-        const { route } = await ShipsContract.getShipInfo(1234);
+        const { route } = await ShipsContract.getShipInfo(222);
         for (const { tokenContract, tokenId } of route) {
             if (tokenContract == SettlementsContract.address) {
                 await LegacyContract.settle(tokenId.toString());
@@ -270,7 +270,7 @@ describe("Ships", function () {
             await ethers.provider.send("evm_mine");
         }
 
-        const unharvestedTokens = await ShipsContract.getUnharvestedTokens(1234);
+        const unharvestedTokens = await ShipsContract.getUnharvestedTokens(222);
         const balancesBefore = await Promise.all(
             unharvestedTokens.map(async ({ resourceTokenContract, amount }) => {
                 const contract = await ethers.getContractAt("ERC20Mintable", resourceTokenContract);
@@ -279,7 +279,7 @@ describe("Ships", function () {
             })
         );
 
-        await ShipsContract.harvest(1234);
+        await ShipsContract.harvest(222);
 
         const balancesAfter = await Promise.all(
             unharvestedTokens.map(async ({ resourceTokenContract, amount }) => {
@@ -294,45 +294,9 @@ describe("Ships", function () {
         }
     });
 
-    it("Should harvest single token", async function () {
-        await ShipsContract.mint(1234);
-        const [account1, account2] = await getUnnamedAccounts();
-
-        let i = 0;
-        while (i < 1000) {
-            i++;
-            await ethers.provider.send("evm_mine");
-        }
-
-        const shipInfo = await ShipsContract.getShipInfo(1234);
-        const tokenId = shipInfo.route[0].tokenId.toString();
-        await LegacyContract.settle(tokenId);
-        await migrateContract(tokenId, LegacyContract, SettlementsContract);
-        await SettlementsContract.transferFrom(account1, account2, tokenId);
-
-        const unharvestedTokens = await ShipsContract.getUnharvestedTokens(1234);
-        const { resourceTokenContract, amount } = unharvestedTokens[0];
-        const TokenContract = await ethers.getContractAt("ERC20Mintable", resourceTokenContract);
-        const balanceBefore = await TokenContract.balanceOf(account1);
-
-        const GoldTokenContract = await ethers.getContract("GoldToken");
-        const goldTokenBalanceBefore = await GoldTokenContract.balanceOf(account2);
-
-        await ShipsContract.harvestSingleToken(1234, resourceTokenContract);
-        const goldTokenBalanceAfter = await GoldTokenContract.balanceOf(account2);
-        const balanceAfter = await TokenContract.balanceOf(account1);
-
-        expect(balanceAfter).to.be.gt(balanceBefore);
-        expect(goldTokenBalanceAfter).to.be.gt(goldTokenBalanceBefore);
-
-        await ShipsContract.harvestSingleToken(1234, resourceTokenContract);
-        const balanceAfterAfter = await TokenContract.balanceOf(account1);
-        expect(balanceAfterAfter).to.eq(balanceAfter);
-    });
-
     it("Should not allow anyone to update the route", async function () {
-        await ShipsContract.mint(1234);
-        await expect(ShipsContract.updateRoute([], 1234)).to.be.revertedWith("Invalid route");
+        await ShipsContract.mint(222);
+        await expect(ShipsContract.updateRoute([], 222)).to.be.revertedWith("Invalid route");
     });
 
     it("Should purchase ship", async function () {
@@ -348,8 +312,8 @@ describe("Ships", function () {
         await ShipsContract.connect(account1).purchaseShip(0);
         let balanceAfter = await WoodTokenContract.balanceOf(account1.address);
 
-        expect(await ShipsContract.ownerOf(3001)).to.eq(account1.address);
-        expect(balanceAfter).to.eq(balanceBefore.sub(parseEther("1000")));
+        expect(await ShipsContract.ownerOf(1001)).to.eq(account1.address);
+        expect(balanceAfter).to.eq(balanceBefore.sub(parseEther("3000")));
 
         const GoldTokenContract = await ethers.getContract("GoldToken", account1);
         await GoldTokenContract.connect(deployer).addMinter(account1.address);
@@ -362,11 +326,11 @@ describe("Ships", function () {
         const woodBalanceAfter = await WoodTokenContract.balanceOf(account1.address);
         const goldBalanceAfter = await GoldTokenContract.balanceOf(account1.address);
 
-        expect(await ShipsContract.ownerOf(3002)).to.eq(account1.address);
-        expect(woodBalanceAfter).to.eq(woodBalanceBefore.sub(parseEther("3000")));
+        expect(await ShipsContract.ownerOf(1002)).to.eq(account1.address);
+        expect(woodBalanceAfter).to.eq(woodBalanceBefore.sub(parseEther("10000")));
         expect(goldBalanceAfter).to.eq(goldBalanceBefore.sub(parseEther("5000")));
 
-        const shipInfo = await ShipsContract.getShipInfo(3002);
+        const shipInfo = await ShipsContract.getShipInfo(1002);
         expect(shipInfo.name).to.eq("Clipper");
     });
 
@@ -396,39 +360,39 @@ describe("Ships", function () {
 
         // Takes too long to run this test so commented out
         // it("Should get correct status", async function () {
-        //     await ShipsContract.mint(1234);
-        //     const shipInfo = await ShipsContract.getShipInfo(1234);
+        //     await ShipsContract.mint(222);
+        //     const shipInfo = await ShipsContract.getShipInfo(222);
 
         //     const sailingDuration = Number(
-        //         (await ShipsContract.getSailingDuration(1234)).toString()
+        //         (await ShipsContract.getSailingDuration(222)).toString()
         //     );
 
         //     const [resting, sailing, harvesting] = [0, 1, 2];
         //     for (let s = 0; s < 1; s++) {
         //         for (let i = 0; i < shipInfo.route.length - 1; i++) {
         //             for (let i = 0; i < sailingDuration; i++) {
-        //                 const status = await ShipsHelperContract.getStatus(1234);
+        //                 const status = await ShipsHelperContract.getStatus(222);
         //                 await ethers.provider.send("evm_mine");
         //                 expect(status).to.eq(sailing);
         //             }
 
         //             const harvestDuration = 120;
         //             for (let i = 0; i < harvestDuration; i++) {
-        //                 const status = await ShipsHelperContract.getStatus(1234);
+        //                 const status = await ShipsHelperContract.getStatus(222);
         //                 await ethers.provider.send("evm_mine");
         //                 expect(status).to.eq(harvesting);
         //             }
         //         }
 
         //         for (let i = 0; i < sailingDuration; i++) {
-        //             const status = await ShipsHelperContract.getStatus(1234);
+        //             const status = await ShipsHelperContract.getStatus(222);
         //             await ethers.provider.send("evm_mine");
         //             expect(status).to.eq(sailing);
         //         }
 
         //         const harvestDuration = 120;
         //         for (let i = 0; i < harvestDuration; i++) {
-        //             const status = await ShipsHelperContract.getStatus(1234);
+        //             const status = await ShipsHelperContract.getStatus(222);
         //             await ethers.provider.send("evm_mine");
         //             expect(status).to.eq(resting);
         //         }
