@@ -43,17 +43,11 @@ const deployFunc = async function (hre) {
     // const SettlementsV2Contract = await ethers.getContract("SettlementsV2");
     // for (const resourceToken of resourceTokens) {
     //     const tx4 = await resourceToken.addMinter(SettlementsV2Contract.address);
-<<<<<<< HEAD
     //     await tx4.wait();
     // }
     // const HelpersContract = await ethers.getContract("Helpers");
     // const tx = await SettlementsV2Contract.setHelpersContract(HelpersContract.address);
     // await tx.wait();
-=======
-    // }
-    // const HelpersContract = await ethers.getContract("Helpers");
-    // await SettlementsV2Contract.setHelpersContract(HelpersContract.address);
->>>>>>> 3b35395ecca6abd7a9c5484621b1e9b8607a1671
 };
 
 module.exports = deployFunc;
